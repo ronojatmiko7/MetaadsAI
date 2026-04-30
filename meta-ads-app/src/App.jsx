@@ -3,7 +3,8 @@ import {
   ArrowRight, ArrowLeft, Target, Briefcase, ImageIcon, Video, Globe, 
   Rocket, CheckCircle2, Lightbulb, Crosshair, PenTool, RefreshCcw, 
   Users, MessageCircle, X, Send, Bot, PlusCircle, LayoutDashboard, 
-  CheckSquare, LineChart, ChevronRight, Calculator, ShoppingCart, Store, Trash2
+  CheckSquare, LineChart, ChevronRight, Calculator, ShoppingCart, Store, Trash2,
+  KeyRound, ShieldCheck
 } from 'lucide-react';
 
 // --- CONSTANTS ---
@@ -29,7 +30,7 @@ const parseAIResponse = (text) => {
     return JSON.parse(cleaned);
   } catch (e) {
     console.error("JSON Parse Error:", e, text);
-    throw new Error("Format response AI tidak valid.");
+    throw new Error("Format response AI tidak valid. Mohon coba lagi.");
   }
 };
 
@@ -37,13 +38,14 @@ const parseAIResponse = (text) => {
 // GROQ API CALL HELPER
 // ==========================================
 const callGroqAPI = async (messages, apiKey, requireJson = false) => {
+  if (!apiKey) throw new Error("API Key belum diatur. Silakan masukkan kunci Groq Anda di menu pengaturan.");
+
   const payload = {
     model: "llama-3.3-70b-versatile", // Model unggulan Llama 3 dari Groq
     messages: messages,
     temperature: 0.7,
   };
 
-  // Memaksa Groq mengembalikan format JSON jika diminta
   if (requireJson) {
     payload.response_format = { type: "json_object" };
   }
@@ -60,7 +62,7 @@ const callGroqAPI = async (messages, apiKey, requireJson = false) => {
   if (!response.ok) {
     const err = await response.json();
     console.error("Groq Error:", err);
-    throw new Error(err.error?.message || 'Gagal menghubungi Groq AI.');
+    throw new Error(err.error?.message || 'Gagal menghubungi Groq AI. Periksa koneksi atau API Key Anda.');
   }
 
   const data = await response.json();
@@ -69,15 +71,67 @@ const callGroqAPI = async (messages, apiKey, requireJson = false) => {
 
 
 // ==========================================
+// COMPONENT: SETTINGS MODAL (Input API Key)
+// ==========================================
+function SettingsModal({ isOpen, onClose, currentKey, onSave }) {
+  const [inputKey, setInputKey] = useState(currentKey || '');
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 relative animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800"><X className="w-6 h-6"/></button>
+        
+        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6 mx-auto">
+          <KeyRound className="w-8 h-8" />
+        </div>
+        
+        <h2 className="text-2xl font-extrabold text-center text-slate-900 mb-2">Pengaturan AI</h2>
+        <p className="text-center text-slate-500 text-sm mb-6 leading-relaxed">
+          Masukkan Kunci API Groq Anda. Kunci ini <strong className="text-slate-700">100% aman</strong> dan hanya disimpan di browser perangkat Anda ini, tidak dikirim ke server manapun selain langsung ke Groq.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Groq API Key</label>
+            <input 
+              type="password" 
+              value={inputKey} 
+              onChange={e => setInputKey(e.target.value)} 
+              placeholder="gsk_..." 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <button 
+            onClick={() => { onSave(inputKey); onClose(); }} 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-5 h-5" /> Simpan Konfigurasi
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ==========================================
 // COMPONENT 1: WIZARD (Buat Kampanye Baru)
 // ==========================================
-function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
+function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSettings }) {
   const [step, setStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState({ product: '', audience: '', goal: '', budget: '', assets: [] });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleNext = () => setStep(prev => prev + 1);
+  const handleNext = () => {
+    if (step === 0 && !apiKey) {
+      setShowSettings(true);
+      return;
+    }
+    setStep(prev => prev + 1);
+  };
   const handleBack = () => setStep(prev => prev - 1);
 
   const toggleAsset = (assetId) => {
@@ -116,7 +170,6 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
 
     const userQuery = `Produk: ${formData.product}\nAudiens: ${formData.audience}\nTujuan: ${GOALS.find(g=>g.id===formData.goal)?.title}\nAnggaran: Rp ${formData.budget}\nAset: ${formData.assets.join(', ')}`;
 
-    // Format pesan untuk Groq (mengikuti standar OpenAI)
     const messages = [
       { role: "system", content: systemPrompt },
       { role: "user", content: userQuery }
@@ -148,7 +201,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
 
     } catch (err) {
       console.error(err);
-      setErrorMsg('Gagal menyusun Blueprint. Silakan coba lagi.');
+      setErrorMsg(err.message || 'Gagal menyusun Blueprint. Silakan coba lagi.');
       setStep(5);
     } finally {
       setIsGenerating(false);
@@ -165,6 +218,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Setup Iklan. <br/>Pantau. Optimasi.</h1>
           <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Sistem manajemen Meta Ads yang ditenagai oleh Groq AI super cepat. Simpan dan pantau performa kampanye Anda secara lokal.</p>
           <button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-full text-lg shadow-lg flex items-center gap-2 mx-auto">Mulai Setup Baru <ArrowRight className="w-5 h-5" /></button>
+          {!apiKey && <p className="text-sm text-amber-600 mt-4 font-medium flex items-center justify-center gap-1"><Lightbulb className="w-4 h-4"/> Anda akan diminta memasukkan API Key saat memulai.</p>}
         </div>
       )}
 
@@ -316,6 +370,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
   };
 
   const handleAnalyze = async () => {
+    if(!apiKey) return alert("API Key belum diatur. Silakan atur di menu.");
     setIsAnalyzing(true);
     const prompt = `Anda adalah analis Data Meta Ads. Evaluasi kampanye ini.
     Konteks: Tujuan ${campaign.formData.goal}, Budget Rp${campaign.formData.budget}.
@@ -341,8 +396,8 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     }
   };
 
-  // FITUR BARU: GENERATE ANGLE TAMBAHAN
   const handleGenerateNewAngle = async () => {
+    if(!apiKey) return alert("API Key belum diatur. Silakan atur di menu.");
     setIsGeneratingAngle(true);
     const existingAngles = campaign.blueprint.creativeMatrix.map(a => a.angleName).join(', ');
     
@@ -370,9 +425,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
       const resultText = await callGroqAPI(messages, apiKey, true);
       const newAngle = parseAIResponse(resultText);
       
-      // Tambahkan angle baru ke dalam array creativeMatrix yang ada
       const updatedMatrix = [...campaign.blueprint.creativeMatrix, newAngle];
-      
       updateCampaign({
         ...campaign,
         blueprint: { ...campaign.blueprint, creativeMatrix: updatedMatrix }
@@ -503,7 +556,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
               </div>
             ))}
             
-            {/* TOMBOL GENERATE ANGLE BARU */}
             <button 
               onClick={handleGenerateNewAngle} 
               disabled={isGeneratingAngle}
@@ -515,7 +567,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                 <><Lightbulb className="w-5 h-5" /> Generate Angle Baru (AI)</>
               )}
             </button>
-
           </div>
 
           <div className="bg-slate-900 rounded-2xl p-6 shadow-lg text-white mt-8 flex items-start gap-4">
@@ -531,7 +582,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
 // ==========================================
 // COMPONENT 4: CHATBOT (Floating Assistant)
 // ==========================================
-function Chatbot({ apiKey, contextData }) {
+function Chatbot({ apiKey, contextData, setShowSettings }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -551,6 +602,11 @@ function Chatbot({ apiKey, contextData }) {
     e.preventDefault();
     if (!input.trim()) return;
     
+    if (!apiKey) {
+      setShowSettings(true);
+      return;
+    }
+
     const newMsg = { role: 'user', content: input };
     setMessages(prev => [...prev, newMsg]); 
     setInput(''); 
@@ -576,7 +632,6 @@ function Chatbot({ apiKey, contextData }) {
   };
 
   return (
-    // Penyesuaian posisi bottom untuk menghindari tabrakan dengan mobile menu
     <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col items-end">
       {isOpen && (
         <div className="bg-white w-[360px] max-w-[calc(100vw-32px)] h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border border-slate-200 flex flex-col mb-4 overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
@@ -615,6 +670,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard'); 
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [chatMessageQueue, setChatMessageQueue] = useState(null); 
+  
+  // STATE BARU: Menyimpan API Key di LocalStorage secara aman
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('metaAds_groqKey') || '');
+  const [showSettings, setShowSettings] = useState(false);
 
   const [campaigns, setCampaigns] = useState(() => {
     try {
@@ -625,8 +684,11 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns)); }, [campaigns]);
 
-  // ---> KUNCI DARI VERCEL TETAP AMAN <---
-  const apiKey = ""; 
+  // FUNGSI BARU: Menyimpan Kunci secara Lokal
+  const handleSaveApiKey = (key) => {
+    localStorage.setItem('metaAds_groqKey', key);
+    setApiKey(key);
+  };
 
   const openCampaign = (campaign) => { setSelectedCampaignId(campaign.id); setActiveTab('campaignDetail'); };
   const updateCampaign = (updatedCampaign) => { setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c)); };
@@ -642,12 +704,19 @@ export default function App() {
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200 overflow-hidden">
       
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        currentKey={apiKey} 
+        onSave={handleSaveApiKey} 
+      />
+
       {/* --- SIDEBAR UNTUK DESKTOP --- */}
-      <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shadow-sm z-10">
+      <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shadow-sm z-10 relative">
         <div className="p-6 border-b border-slate-100 flex items-center gap-2 text-blue-600 font-extrabold text-2xl">
           <Target className="w-8 h-8" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
         </div>
-        <nav className="p-4 space-y-3 mt-2">
+        <nav className="p-4 space-y-3 mt-2 flex-1">
           <button 
             onClick={() => {setActiveTab('dashboard'); setSelectedCampaignId(null);}} 
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === 'dashboard' || activeTab === 'campaignDetail' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
@@ -661,16 +730,28 @@ export default function App() {
             <PlusCircle className="w-5 h-5" /> Setup Kampanye
           </button>
         </nav>
+        
+        {/* TOMBOL PENGATURAN KUNCI DI SIDEBAR */}
+        <div className="p-4 border-t border-slate-100">
+           <button onClick={() => setShowSettings(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all">
+             <KeyRound className="w-5 h-5" /> API Key {apiKey ? 'Tersimpan' : '(Kosong)'}
+           </button>
+        </div>
       </aside>
 
       {/* --- HEADER KHUSUS MOBILE --- */}
-      <div className="md:hidden fixed top-0 w-full bg-white border-b border-slate-200 p-4 flex items-center justify-center gap-2 text-blue-600 font-extrabold text-xl z-20 shadow-sm">
-        <Target className="w-6 h-6" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
+      <div className="md:hidden fixed top-0 w-full bg-white border-b border-slate-200 p-4 flex items-center justify-between z-20 shadow-sm">
+        <div className="flex items-center gap-2 text-blue-600 font-extrabold text-xl">
+           <Target className="w-6 h-6" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
+        </div>
+        <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg ${apiKey ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'}`}>
+           <KeyRound className="w-5 h-5" />
+        </button>
       </div>
 
       {/* --- AREA KONTEN UTAMA --- */}
       <main className="flex-1 h-full overflow-y-auto pt-16 md:pt-0 pb-24 md:pb-0 relative scroll-smooth">
-        {activeTab === 'new' && <Wizard setActiveTab={setActiveTab} setCampaigns={setCampaigns} apiKey={apiKey} addChatMessage={setChatMessageQueue} />}
+        {activeTab === 'new' && <Wizard setActiveTab={setActiveTab} setCampaigns={setCampaigns} apiKey={apiKey} addChatMessage={setChatMessageQueue} setShowSettings={setShowSettings} />}
         {activeTab === 'dashboard' && <Dashboard campaigns={campaigns} openCampaign={openCampaign} deleteCampaign={deleteCampaign} />}
         {activeTab === 'campaignDetail' && activeCampaign && <CampaignDetail campaign={activeCampaign} closeDetail={() => setActiveTab('dashboard')} updateCampaign={updateCampaign} apiKey={apiKey} />}
       </main>
@@ -694,7 +775,7 @@ export default function App() {
       </nav>
 
       {/* --- CHATBOT --- */}
-      <Chatbot apiKey={apiKey} contextData={{ activeTab, campaign: activeCampaign, externalMessage: chatMessageQueue }} />
+      <Chatbot apiKey={apiKey} contextData={{ activeTab, campaign: activeCampaign, externalMessage: chatMessageQueue }} setShowSettings={setShowSettings} />
     </div>
   );
 }
