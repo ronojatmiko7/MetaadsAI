@@ -4,7 +4,7 @@ import {
   Rocket, CheckCircle2, Lightbulb, Crosshair, PenTool, RefreshCcw, 
   Users, MessageCircle, X, Send, Bot, PlusCircle, LayoutDashboard, 
   CheckSquare, LineChart, ChevronRight, Calculator, ShoppingCart, Store, Trash2,
-  KeyRound, ShieldCheck
+  KeyRound, ShieldCheck, AlertTriangle
 } from 'lucide-react';
 
 // --- CONSTANTS ---
@@ -149,23 +149,32 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
     setErrorMsg('');
     setStep(6); 
     
-    const systemPrompt = `Anda adalah Media Buyer Meta Ads expert Indonesia. Berdasarkan input user, buat blueprint JSON valid persis seperti skema ini (Jangan tambahkan teks lain selain JSON!):
+    // UPDATE SUPER PROMPT 2026: Paksa Broad Audience & 5 Angles Default
+    const systemPrompt = `Anda adalah Top 1% Media Buyer Meta Ads expert Indonesia tahun 2026. Berdasarkan input user, buat blueprint JSON valid persis seperti skema ini (Jangan tambahkan teks lain selain JSON!).
+
+    ATURAN BEST PRACTICE 2026:
+    1. Targeting: Tekankan penggunaan Advantage+ Audience (Broad Targeting). Biarkan algoritma Meta yang mencari pembeli.
+    2. Creative: "Creative is the new targeting". Anda WAJIB membuat 5 (LIMA) matriks kreatif dengan angle hook yang BERBEDA-BEDA (Contoh: Emosional, Logis, FOMO/Urgency, Edukasi, Testimoni).
+    3. Campaign: Jika goal adalah Penjualan, sarankan Advantage+ Shopping Campaign (ASC+).
+
+    Format JSON:
     {
       "campaignName": "Nama Kampanye", 
-      "objective": "Objektif (Sales/Leads/Traffic/dll)", 
-      "budgetStrategy": "Saran CBO/ABO", 
-      "targeting": "Saran targeting",
+      "objective": "Objektif spesifik sesuai Goal", 
+      "budgetStrategy": "Saran detail Budgeting & CBO/ABO", 
+      "targeting": "Rekomendasi Advantage+ Audience / Broad Targeting",
       "creativeMatrix": [
+        // WAJIB ADA 5 OBJECT DI DALAM ARRAY INI
         {
-          "angleName": "Angle", 
-          "primaryText": "Caption", 
-          "headline": "Judul", 
-          "description": "Deskripsi", 
+          "angleName": "Nama Angle (Maks 3 kata, misal: 'FOMO Diskon')", 
+          "primaryText": "Caption copywriting yang mematikan", 
+          "headline": "Judul (Pendek & Clicky)", 
+          "description": "Deskripsi singkat", 
           "callToAction": "Tombol CTA", 
-          "format": "Format"
+          "format": "Format Aset (Video/Gambar Statis)"
         }
       ],
-      "proTip": "Tips 1 kalimat"
+      "proTip": "1 kalimat super tip rahasia Meta Ads 2026"
     }`;
 
     const userQuery = `Produk: ${formData.product}\nAudiens: ${formData.audience}\nTujuan: ${GOALS.find(g=>g.id===formData.goal)?.title}\nAnggaran: Rp ${formData.budget}\nAset: ${formData.assets.join(', ')}`;
@@ -179,23 +188,24 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
       const resultText = await callGroqAPI(messages, apiKey, true);
       const parsedBlueprint = parseAIResponse(resultText);
       
+      // UPDATE: Checklist Ekstrim Anti-Boncos 2026
       const newCampaign = {
         id: Date.now().toString(),
         date: new Date().toLocaleDateString('id-ID'),
         formData: { ...formData },
         blueprint: parsedBlueprint,
         checklist: [
-          { id: 1, text: 'Pasang & Verify Meta Pixel di Website', done: false },
-          { id: 2, text: 'Siapkan variasi kreatif sesuai matriks', done: false },
-          { id: 3, text: 'Publish kampanye dan tunggu approval', done: false },
-          { id: 4, text: 'Fase Pembelajaran (Jangan ubah setting selama 3-4 hari)', done: false },
-          { id: 5, text: 'Analisis performa awal setelah hari ke-5', done: false },
+          { id: 1, text: 'Setup Meta Pixel & Conversions API (CAPI) di website', done: false },
+          { id: 2, text: 'Siapkan 5 variasi kreatif (Angle berbeda) untuk Testing', done: false },
+          { id: 3, text: 'Gunakan Advantage+ Audience (Broad Targeting)', done: false },
+          { id: 4, text: 'Publish kampanye dan tunggu approval Meta', done: false },
+          { id: 5, text: 'FASE PEMBELAJARAN: DILARANG KERAS mengubah budget/iklan selama 72 JAM PERTAMA atau sebelum mencapai 50 konversi', done: false },
         ],
         analyses: []
       };
       
       setCampaigns(prev => [newCampaign, ...prev]);
-      addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" selesai dibuat dan disimpan ke Dashboard! Ceklis tugas pasca-rilis Anda juga sudah siap.`);
+      addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" dengan 5 Angle Kreatif telah siap! Ingat: Kunci sukses 2026 adalah variasi kreatif dan kesabaran di Learning Phase.`);
       
       setTimeout(() => { setActiveTab('dashboard'); }, 2000);
 
@@ -215,17 +225,18 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
       {step === 0 && (
         <div className="text-center mt-12">
           <div className="bg-blue-100 text-blue-700 p-5 rounded-full inline-block mb-6"><Target className="w-12 h-12" /></div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Setup Iklan. <br/>Pantau. Optimasi.</h1>
-          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Sistem manajemen Meta Ads yang ditenagai oleh Groq AI super cepat. Simpan dan pantau performa kampanye Anda secara lokal.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Setup Iklan. <br/>Winning Ads.</h1>
+          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Sistem manajemen Meta Ads standar 2026 ditenagai Groq AI. Hasilkan 5 variasi hook iklan dalam hitungan detik.</p>
           <button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-full text-lg shadow-lg flex items-center gap-2 mx-auto">Mulai Setup Baru <ArrowRight className="w-5 h-5" /></button>
-          {!apiKey && <p className="text-sm text-amber-600 mt-4 font-medium flex items-center justify-center gap-1"><Lightbulb className="w-4 h-4"/> Anda akan diminta memasukkan API Key saat memulai.</p>}
+          {!apiKey && <p className="text-sm text-amber-600 mt-4 font-medium flex items-center justify-center gap-1"><AlertTriangle className="w-4 h-4"/> Anda akan diminta memasukkan API Key saat memulai.</p>}
         </div>
       )}
 
       {step === 1 && (
         <div className="animate-in slide-in-from-right-8 duration-500">
           <h2 className="text-3xl font-bold mb-2">Apa yang Anda jual?</h2>
-          <textarea className="w-full bg-white border border-slate-300 rounded-2xl p-6 text-lg focus:ring-2 focus:ring-blue-500 outline-none mt-4 min-h-[150px]" placeholder="Deskripsi produk atau penawaran..." value={formData.product} onChange={e => setFormData({...formData, product: e.target.value})} />
+          <textarea className="w-full bg-white border border-slate-300 rounded-2xl p-6 text-lg focus:ring-2 focus:ring-blue-500 outline-none mt-4 min-h-[150px]" placeholder="Sebutkan fitur, benefit utama, dan penawaran (contoh: Diskon 50%)..." value={formData.product} onChange={e => setFormData({...formData, product: e.target.value})} />
+          <p className="text-sm text-slate-500 mt-3 flex items-start gap-2 bg-slate-100 p-3 rounded-lg"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Semakin detail Anda mendeskripsikan "Unfair Advantage" produk Anda, semakin tajam AI meracik copywriting.</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500 hover:text-slate-800"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={handleNext} disabled={formData.product.length < 5} className="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3 px-8 rounded-full flex gap-2">Lanjut <ArrowRight className="w-5 h-5" /></button>
@@ -236,7 +247,8 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
       {step === 2 && (
         <div className="animate-in slide-in-from-right-8 duration-500">
           <h2 className="text-3xl font-bold mb-2">Siapa audiens Anda?</h2>
-          <textarea className="w-full bg-white border border-slate-300 rounded-2xl p-6 text-lg focus:ring-2 focus:ring-blue-500 outline-none mt-4 min-h-[150px]" placeholder="Contoh: Ibu rumah tangga usia 25-40 tahun yang suka memasak..." value={formData.audience} onChange={e => setFormData({...formData, audience: e.target.value})} />
+          <textarea className="w-full bg-white border border-slate-300 rounded-2xl p-6 text-lg focus:ring-2 focus:ring-blue-500 outline-none mt-4 min-h-[150px]" placeholder="Contoh: Ibu rumah tangga usia 25-40 tahun yang suka berbelanja online..." value={formData.audience} onChange={e => setFormData({...formData, audience: e.target.value})} />
+          <p className="text-sm text-slate-500 mt-3 flex items-start gap-2 bg-slate-100 p-3 rounded-lg"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> <b>Tips 2026:</b> Jangan memikirkan targeting yang terlalu sempit. Cukup tuliskan siapa "ideal buyer" Anda, dan biarkan AI Meta (Advantage+) mencarikannya.</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500 hover:text-slate-800"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={handleNext} disabled={formData.audience.length < 5} className="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3 px-8 rounded-full flex gap-2">Lanjut <ArrowRight className="w-5 h-5" /></button>
@@ -255,6 +267,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
               </div>
             ))}
           </div>
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2"><Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" /> Pilih "Penjualan" jika Anda memiliki website/Landing Page. Meta memprioritaskan audiens pembeli di objektif ini.</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={handleNext} disabled={!formData.goal} className="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3 px-8 rounded-full flex gap-2">Lanjut <ArrowRight className="w-5 h-5" /></button>
@@ -267,6 +280,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
           <h2 className="text-3xl font-bold mb-6">Budget Harian? (Rp)</h2>
           <input type="number" className="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 px-6 text-2xl font-bold focus:border-blue-500 outline-none" placeholder="100000" value={formData.budget} onChange={e => setFormData({...formData, budget: e.target.value})} />
           {formData.budget && <p className="text-green-600 mt-2 font-medium ml-2">{formatRupiah(formData.budget)}</p>}
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-slate-100 p-3 rounded-lg"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Fase testing awal minimal butuh Rp50.000 - Rp100.000 per hari untuk mendapatkan data metrik (CTR/CPC) yang valid dari Meta.</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={handleNext} disabled={!formData.budget || Number(formData.budget)<15000} className="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3 px-8 rounded-full flex gap-2">Lanjut <ArrowRight className="w-5 h-5" /></button>
@@ -286,6 +300,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
               </div>
             ))}
           </div>
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> AI akan men-generate <b>5 Variasi Angle/Ide Iklan</b> secara otomatis di tahap selanjutnya berdasarkan format yang Anda pilih.</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={generateBlueprint} disabled={formData.assets.length === 0} className="bg-slate-900 hover:bg-black text-white font-bold py-3 px-8 rounded-full flex gap-2 disabled:opacity-50">Generate Blueprint <Rocket className="w-5 h-5" /></button>
@@ -296,7 +311,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
       {step === 6 && (
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95">
           <div className="relative w-20 h-20 mb-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <h2 className="text-2xl font-bold mb-2">Groq sedang berpikir...</h2><p className="text-slate-500">Menulis copywriting dan meracik strategi dengan kecepatan cahaya...</p>
+          <h2 className="text-2xl font-bold mb-2">Groq sedang berpikir...</h2><p className="text-slate-500">Menganalisis audiens, meracik strategi Advantage+, dan menulis 5 Angle iklan...</p>
         </div>
       )}
     </div>
@@ -375,7 +390,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     const prompt = `Anda adalah analis Data Meta Ads. Evaluasi kampanye ini.
     Konteks: Tujuan ${campaign.formData.goal}, Budget Rp${campaign.formData.budget}.
     Metrik Terkini: Spend: Rp${analysisForm.spend}, Konversi: ${analysisForm.results}, CTR: ${analysisForm.ctr}%, CPC: Rp${analysisForm.cpc}.
-    Tugas: Berikan 3 poin evaluasi singkat (1. Status CPA/ROAS, 2. Masalah utama, 3. Action plan - matikan/ganti/scale). Format teks biasa, padat dan langsung ke intinya.`;
+    Tugas: Berikan 3 poin evaluasi singkat berdasarkan metrik (1. Status CPA/ROAS, 2. Deteksi Creative Fatigue jika CTR drop, 3. Action plan konkrit: haruskah scale budget, matikan iklan, atau ganti materi). Format teks biasa, padat.`;
 
     const messages = [
       { role: "system", content: "Anda adalah asisten Meta Ads profesional." },
@@ -401,18 +416,19 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     setIsGeneratingAngle(true);
     const existingAngles = campaign.blueprint.creativeMatrix.map(a => a.angleName).join(', ');
     
-    const prompt = `Anda adalah expert Meta Ads. Buat HANYA SATU angle iklan BARU untuk produk ini yang BERBEDA dari angle yang sudah ada.
+    // UPDATE: Memaksa Hook Angle yang Agresif
+    const prompt = `Anda adalah expert Meta Ads. Buat HANYA SATU angle iklan BARU untuk produk ini yang SANGAT BERBEDA dari angle yang sudah ada. Gunakan pendekatan Hook yang agresif (seperti Outrageous Claim yang masuk akal, Us vs Them, atau Visual Pattern Interrupt).
     Produk: ${campaign.formData.product}
     Audiens: ${campaign.formData.audience}
-    Angle yang SUDAH ADA (Jangan gunakan angle ini lagi): ${existingAngles}
+    Angle yang SUDAH ADA (JANGAN gunakan angle ini lagi): ${existingAngles}
 
     Kembalikan HANYA format JSON valid persis seperti ini:
     {
-      "angleName": "Nama Angle Baru (Unik)",
-      "primaryText": "Caption iklan menarik (maks 3 kalimat)",
-      "headline": "Judul pendek memikat",
+      "angleName": "Nama Angle Baru",
+      "primaryText": "Caption iklan memikat (maks 3 kalimat)",
+      "headline": "Judul click-worthy",
       "description": "Deskripsi singkat / penawaran",
-      "callToAction": "Tombol CTA (misal: Beli Sekarang)",
+      "callToAction": "Tombol CTA",
       "format": "Gambar Statis / Video Pendek"
     }`;
 
@@ -460,26 +476,27 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
           <div>
-            <h3 className="flex items-center gap-2 font-bold text-lg mb-4 text-slate-800"><CheckSquare className="text-blue-600 w-5 h-5"/> Checklist Pasca-Rilis</h3>
+            <h3 className="flex items-center gap-2 font-bold text-lg mb-4 text-slate-800"><CheckSquare className="text-blue-600 w-5 h-5"/> Checklist 2026 Anti-Boncos</h3>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
-              <div className="flex justify-between text-sm mb-2 font-bold"><span className="text-slate-600">Progres Rilis</span><span className="text-blue-600">{progress}%</span></div>
+              <div className="flex justify-between text-sm mb-2 font-bold"><span className="text-slate-600">Progres Keamanan Rilis</span><span className="text-blue-600">{progress}%</span></div>
               <div className="w-full bg-slate-200 h-2 rounded-full"><div className="bg-blue-600 h-2 rounded-full transition-all" style={{width: `${progress}%`}}></div></div>
             </div>
             <div className="space-y-3">
               {campaign.checklist.map(task => (
                 <label key={task.id} className="flex items-start gap-3 cursor-pointer group">
                   <input type="checkbox" checked={task.done} onChange={() => handleToggleChecklist(task.id)} className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0" />
-                  <span className={`text-sm leading-relaxed ${task.done ? 'text-slate-400 line-through' : 'text-slate-700 group-hover:text-slate-900'}`}>{task.text}</span>
+                  <span className={`text-sm leading-relaxed ${task.done ? 'text-slate-400 line-through' : 'text-slate-700 group-hover:text-slate-900 font-medium'}`}>{task.text}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-            <h3 className="flex items-center gap-2 font-bold text-lg mb-2 text-slate-800"><LineChart className="text-purple-600 w-5 h-5"/> Analisis Performa AI</h3>
-            <p className="text-sm text-slate-500 mb-6">Masukkan data hasil iklan terbaru Anda untuk mendapatkan rekomendasi optimasi.</p>
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 opacity-50"></div>
+            <h3 className="flex items-center gap-2 font-bold text-lg mb-2 text-slate-800"><LineChart className="text-purple-600 w-5 h-5"/> Deteksi Performa AI</h3>
+            <p className="text-sm text-slate-500 mb-6">Masukkan data hasil iklan terbaru. AI akan mendeteksi apakah Anda perlu scale budget, matikan iklan, atau ganti kreatif.</p>
             
-            <div className="space-y-4">
+            <div className="space-y-4 relative z-10">
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="text-xs font-bold text-slate-500 block mb-1">SPEND (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" value={analysisForm.spend} onChange={e=>setAnalysisForm({...analysisForm, spend: e.target.value})} /></div>
                 <div><label className="text-xs font-bold text-slate-500 block mb-1">HASIL (Jumlah)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" value={analysisForm.results} onChange={e=>setAnalysisForm({...analysisForm, results: e.target.value})} /></div>
@@ -487,13 +504,13 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                 <div><label className="text-xs font-bold text-slate-500 block mb-1">CPC (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none" value={analysisForm.cpc} onChange={e=>setAnalysisForm({...analysisForm, cpc: e.target.value})} /></div>
               </div>
               <button onClick={handleAnalyze} disabled={!analysisForm.spend || !analysisForm.results || isAnalyzing} className="w-full bg-purple-600 disabled:bg-slate-300 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2">
-                {isAnalyzing ? <span className="animate-pulse">Menganalisis...</span> : <><Calculator className="w-4 h-4"/> Analisis Data</>}
+                {isAnalyzing ? <span className="animate-pulse">Menganalisis Data...</span> : <><Calculator className="w-4 h-4"/> Dapatkan Rekomendasi</>}
               </button>
             </div>
 
             {campaign.analyses && campaign.analyses.length > 0 && (
-              <div className="mt-6 border-t border-slate-200 pt-6">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Riwayat Evaluasi</h4>
+              <div className="mt-6 border-t border-slate-200 pt-6 relative z-10">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Riwayat Evaluasi AI</h4>
                 <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                   {campaign.analyses.map(an => (
                      <div key={an.id} className="bg-white border border-purple-100 rounded-xl p-4 shadow-sm relative">
@@ -512,7 +529,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
         </div>
 
         <div className="border-t border-slate-100 pt-8 mt-4">
-          <h3 className="font-extrabold text-2xl mb-6 flex items-center gap-2 text-slate-900"><Target className="w-6 h-6 text-blue-600"/> Setup Blueprint</h3>
+          <h3 className="font-extrabold text-2xl mb-6 flex items-center gap-2 text-slate-900"><Target className="w-6 h-6 text-blue-600"/> Setup Blueprint 2026</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
@@ -520,18 +537,31 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                <p className="text-slate-800 font-medium leading-relaxed">{campaign.blueprint.budgetStrategy}</p>
             </div>
             <div className="bg-purple-50/50 rounded-2xl p-6 border border-purple-100">
-               <h4 className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-2">Targeting (Ad Set Level)</h4>
+               <h4 className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-2">Sistem Targeting (Ad Set Level)</h4>
                <p className="text-slate-800 font-medium leading-relaxed">{campaign.blueprint.targeting}</p>
             </div>
           </div>
 
-          <h4 className="font-bold text-lg mb-4 text-slate-800">Matriks Kreatif (Ad Level)</h4>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 gap-4">
+             <div>
+                <h4 className="font-bold text-xl text-slate-800">Bank Kreatif (Ad Level)</h4>
+                <p className="text-sm text-slate-500">Test angle ini satu per satu atau sekaligus menggunakan Dynamic Creative Optimization (DCO).</p>
+             </div>
+             <button 
+                onClick={handleGenerateNewAngle} 
+                disabled={isGeneratingAngle}
+                className="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                {isGeneratingAngle ? <span className="animate-pulse">Memikirkan...</span> : <><Lightbulb className="w-4 h-4" /> Generate Angle Ekstra</>}
+              </button>
+          </div>
+
           <div className="grid gap-5">
             {campaign.blueprint.creativeMatrix.map((ad, idx) => (
-              <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-amber-200 transition-colors relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+              <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-blue-200 transition-colors relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 group-hover:bg-amber-500 transition-colors"></div>
                 <div className="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-slate-100">
-                  <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wider">Angle {idx + 1}: {ad.angleName}</span>
+                  <span className="bg-blue-100 group-hover:bg-amber-100 text-blue-800 group-hover:text-amber-800 transition-colors text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wider">Angle {idx + 1}: {ad.angleName}</span>
                   <span className="text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1.5 rounded uppercase tracking-wider ml-auto">{ad.format}</span>
                 </div>
                 <div className="space-y-4">
@@ -549,29 +579,17 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Deskripsi & CTA</span>
                         {ad.description && <p className="text-slate-600 text-sm mb-2">{ad.description}</p>}
                       </div>
-                      <div className="mt-2 inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg w-fit">Tombol: {ad.callToAction}</div>
+                      <div className="mt-2 inline-block bg-slate-200 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg w-fit">Tombol: {ad.callToAction}</div>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
-            
-            <button 
-              onClick={handleGenerateNewAngle} 
-              disabled={isGeneratingAngle}
-              className="mt-2 w-full md:w-auto bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-            >
-              {isGeneratingAngle ? (
-                <span className="animate-pulse flex items-center gap-2">Memikirkan angle baru...</span>
-              ) : (
-                <><Lightbulb className="w-5 h-5" /> Generate Angle Baru (AI)</>
-              )}
-            </button>
           </div>
 
           <div className="bg-slate-900 rounded-2xl p-6 shadow-lg text-white mt-8 flex items-start gap-4">
             <Lightbulb className="w-6 h-6 text-yellow-400 shrink-0" />
-            <div><h4 className="text-sm font-bold text-white mb-1 uppercase tracking-wider text-slate-400">Pro Tip</h4><p className="text-slate-200">{campaign.blueprint.proTip}</p></div>
+            <div><h4 className="text-sm font-bold text-white mb-1 uppercase tracking-wider text-slate-400">Winning Tip 2026</h4><p className="text-slate-200 leading-relaxed">{campaign.blueprint.proTip}</p></div>
           </div>
         </div>
       </div>
@@ -586,7 +604,7 @@ function Chatbot({ apiKey, contextData, setShowSettings }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'assistant', content: 'Halo! Ada pertanyaan tentang Meta Ads atau butuh bantuan optimasi?' }]);
+  const [messages, setMessages] = useState([{ role: 'assistant', content: 'Halo! Ada pertanyaan tentang Meta Ads atau butuh bantuan optimasi kampanye Anda?' }]);
   const endRef = useRef(null);
 
   useEffect(() => { if (endRef.current) endRef.current.scrollIntoView({ behavior: 'smooth' }); }, [messages, isOpen]);
@@ -612,9 +630,9 @@ function Chatbot({ apiKey, contextData, setShowSettings }) {
     setInput(''); 
     setIsTyping(true);
 
-    let sysContext = `Anda asisten Meta Ads. Jawab ringkas dan solutif.`;
+    let sysContext = `Anda adalah expert Meta Ads tahun 2026. Jawab ringkas, modern, dan selalu sarankan best practice terbaru (Broad Targeting, Advantage+, Creative Testing).`;
     if (contextData?.activeTab === 'campaignDetail' && contextData?.campaign) {
-       sysContext += `Konteks: Sedang melihat kampanye "${contextData.campaign.blueprint.campaignName}".`;
+       sysContext += `Konteks: User sedang melihat kampanye "${contextData.campaign.blueprint.campaignName}".`;
     }
 
     const groqMessages = [
@@ -651,7 +669,7 @@ function Chatbot({ apiKey, contextData, setShowSettings }) {
             <div ref={endRef} />
           </div>
           <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-200 flex gap-2">
-            <input type="text" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tanya sesuatu..." className="flex-1 bg-slate-100 rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" />
+            <input type="text" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tanya tentang Meta Ads..." className="flex-1 bg-slate-100 rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" />
             <button type="submit" disabled={!input.trim() || isTyping} className="bg-blue-600 disabled:bg-slate-300 text-white rounded-full p-2.5 hover:bg-blue-700 transition-colors"><Send className="w-4 h-4 ml-0.5" /></button>
           </form>
         </div>
@@ -671,7 +689,6 @@ export default function App() {
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [chatMessageQueue, setChatMessageQueue] = useState(null); 
   
-  // STATE BARU: Menyimpan API Key di LocalStorage secara aman
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('metaAds_groqKey') || '');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -684,7 +701,6 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns)); }, [campaigns]);
 
-  // FUNGSI BARU: Menyimpan Kunci secara Lokal
   const handleSaveApiKey = (key) => {
     localStorage.setItem('metaAds_groqKey', key);
     setApiKey(key);
@@ -731,9 +747,8 @@ export default function App() {
           </button>
         </nav>
         
-        {/* TOMBOL PENGATURAN KUNCI DI SIDEBAR */}
         <div className="p-4 border-t border-slate-100">
-           <button onClick={() => setShowSettings(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all">
+           <button onClick={() => setShowSettings(true)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${apiKey ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`}>
              <KeyRound className="w-5 h-5" /> API Key {apiKey ? 'Tersimpan' : '(Kosong)'}
            </button>
         </div>
