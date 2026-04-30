@@ -38,7 +38,7 @@ const parseAIResponse = (text) => {
 // ==========================================
 const callGroqAPI = async (messages, apiKey, requireJson = false) => {
   const payload = {
-    model: "llama3-70b-8192", // Model unggulan Llama 3 dari Groq
+    model: "llama-3.3-70b-versatile", // Model unggulan Llama 3 dari Groq
     messages: messages,
     temperature: 0.7,
   };
