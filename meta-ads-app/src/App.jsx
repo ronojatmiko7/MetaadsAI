@@ -25,7 +25,6 @@ const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency'
 // --- HELPER: ROBUST JSON PARSER ---
 const parseAIResponse = (text) => {
   try {
-    // Hilangkan backticks markdown jika AI mengembalikannya
     const cleaned = text.replace(/```json/gi, '').replace(/```/gi, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
@@ -33,6 +32,41 @@ const parseAIResponse = (text) => {
     throw new Error("Format response AI tidak valid.");
   }
 };
+
+// ==========================================
+// GROQ API CALL HELPER
+// ==========================================
+const callGroqAPI = async (messages, apiKey, requireJson = false) => {
+  const payload = {
+    model: "llama3-70b-8192", // Model unggulan Llama 3 dari Groq
+    messages: messages,
+    temperature: 0.7,
+  };
+
+  // Memaksa Groq mengembalikan format JSON jika diminta
+  if (requireJson) {
+    payload.response_format = { type: "json_object" };
+  }
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    console.error("Groq Error:", err);
+    throw new Error(err.error?.message || 'Gagal menghubungi Groq AI.');
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+};
+
 
 // ==========================================
 // COMPONENT 1: WIZARD (Buat Kampanye Baru)
@@ -61,23 +95,36 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
     setErrorMsg('');
     setStep(6); 
     
-    const systemPrompt = `Anda adalah Media Buyer Meta Ads expert Indonesia. Berdasarkan input user, buat blueprint JSON valid persis seperti ini:
+    const systemPrompt = `Anda adalah Media Buyer Meta Ads expert Indonesia. Berdasarkan input user, buat blueprint JSON valid persis seperti skema ini (Jangan tambahkan teks lain selain JSON!):
     {
-      "campaignName": "Nama Kampanye", "objective": "Objektif (Sales/Leads/Traffic/dll)", "budgetStrategy": "Saran CBO/ABO", "targeting": "Saran targeting",
-      "creativeMatrix": [{"angleName": "Angle", "primaryText": "Caption", "headline": "Judul", "description": "Deskripsi", "callToAction": "Tombol CTA", "format": "Format"}],
+      "campaignName": "Nama Kampanye", 
+      "objective": "Objektif (Sales/Leads/Traffic/dll)", 
+      "budgetStrategy": "Saran CBO/ABO", 
+      "targeting": "Saran targeting",
+      "creativeMatrix": [
+        {
+          "angleName": "Angle", 
+          "primaryText": "Caption", 
+          "headline": "Judul", 
+          "description": "Deskripsi", 
+          "callToAction": "Tombol CTA", 
+          "format": "Format"
+        }
+      ],
       "proTip": "Tips 1 kalimat"
     }`;
+
     const userQuery = `Produk: ${formData.product}\nAudiens: ${formData.audience}\nTujuan: ${GOALS.find(g=>g.id===formData.goal)?.title}\nAnggaran: Rp ${formData.budget}\nAset: ${formData.assets.join(', ')}`;
 
+    // Format pesan untuk Groq (mengikuti standar OpenAI)
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userQuery }
+    ];
+
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { responseMimeType: "application/json" } })
-      });
-      if (!response.ok) throw new Error('Gagal menghubungi AI.');
-      
-      const data = await response.json();
-      const parsedBlueprint = parseAIResponse(data.candidates[0].content.parts[0].text);
+      const resultText = await callGroqAPI(messages, apiKey, true);
+      const parsedBlueprint = parseAIResponse(resultText);
       
       const newCampaign = {
         id: Date.now().toString(),
@@ -91,16 +138,13 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
           { id: 4, text: 'Fase Pembelajaran (Jangan ubah setting selama 3-4 hari)', done: false },
           { id: 5, text: 'Analisis performa awal setelah hari ke-5', done: false },
         ],
-        analyses: [] // Sekarang mendukung multi-analisis
+        analyses: []
       };
       
       setCampaigns(prev => [newCampaign, ...prev]);
       addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" selesai dibuat dan disimpan ke Dashboard! Ceklis tugas pasca-rilis Anda juga sudah siap.`);
       
-      // Auto-redirect to dashboard and open detail
-      setTimeout(() => {
-        setActiveTab('dashboard');
-      }, 2000);
+      setTimeout(() => { setActiveTab('dashboard'); }, 2000);
 
     } catch (err) {
       console.error(err);
@@ -119,7 +163,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
         <div className="text-center mt-12">
           <div className="bg-blue-100 text-blue-700 p-5 rounded-full inline-block mb-6"><Target className="w-12 h-12" /></div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Setup Iklan. <br/>Pantau. Optimasi.</h1>
-          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Sistem manajemen Meta Ads yang menyimpan data kampanye Anda secara lokal untuk memantau performa tanpa batas waktu.</p>
+          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Sistem manajemen Meta Ads yang ditenagai oleh Groq AI super cepat. Simpan dan pantau performa kampanye Anda secara lokal.</p>
           <button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-full text-lg shadow-lg flex items-center gap-2 mx-auto">Mulai Setup Baru <ArrowRight className="w-5 h-5" /></button>
         </div>
       )}
@@ -179,7 +223,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
       {step === 5 && (
         <div className="animate-in slide-in-from-right-8 duration-500">
           <h2 className="text-3xl font-bold mb-6">Aset Kreatif?</h2>
-          {errorMsg && <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 text-sm">{errorMsg}</div>}
+          {errorMsg && <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 text-sm font-medium border border-red-200">{errorMsg}</div>}
           <div className="grid grid-cols-1 gap-4">
             {ASSETS.map(a => (
               <div key={a.id} onClick={() => toggleAsset(a.id)} className={`cursor-pointer p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${formData.assets.includes(a.id) ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
@@ -198,7 +242,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage }) {
       {step === 6 && (
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95">
           <div className="relative w-20 h-20 mb-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <h2 className="text-2xl font-bold mb-2">Meracik Blueprint...</h2><p className="text-slate-500">Menulis copywriting dan mengatur strategi penargetan...</p>
+          <h2 className="text-2xl font-bold mb-2">Groq sedang berpikir...</h2><p className="text-slate-500">Menulis copywriting dan meracik strategi dengan kecepatan cahaya...</p>
         </div>
       )}
     </div>
@@ -259,7 +303,6 @@ function Dashboard({ campaigns, openCampaign, deleteCampaign }) {
 // COMPONENT 3: CAMPAIGN DETAIL (Manajemen + Analisis)
 // ==========================================
 function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
-  // STATE LOKAL HANYA UNTUK KAMPANYE INI (Fix bug form global)
   const [analysisForm, setAnalysisForm] = useState({ spend: '', results: '', ctr: '', cpc: '' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -278,21 +321,20 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     Metrik Terkini: Spend: Rp${analysisForm.spend}, Konversi: ${analysisForm.results}, CTR: ${analysisForm.ctr}%, CPC: Rp${analysisForm.cpc}.
     Tugas: Berikan 3 poin evaluasi singkat (1. Status CPA/ROAS, 2. Masalah utama, 3. Action plan - matikan/ganti/scale). Format teks biasa, padat dan langsung ke intinya.`;
 
+    const messages = [
+      { role: "system", content: "Anda adalah asisten Meta Ads profesional." },
+      { role: "user", content: prompt }
+    ];
+
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      });
-      const data = await response.json();
-      const insight = data.candidates[0].content.parts[0].text;
-      
+      const insight = await callGroqAPI(messages, apiKey, false);
       const newAnalysis = { id: Date.now().toString(), date: new Date().toLocaleDateString('id-ID'), data: { ...analysisForm }, insight };
-      const updatedAnalyses = [newAnalysis, ...(campaign.analyses || [])]; // Simpan riwayat
+      const updatedAnalyses = [newAnalysis, ...(campaign.analyses || [])];
       
       updateCampaign({ ...campaign, analyses: updatedAnalyses });
-      setAnalysisForm({ spend: '', results: '', ctr: '', cpc: '' }); // Reset form setelah sukses
+      setAnalysisForm({ spend: '', results: '', ctr: '', cpc: '' }); 
     } catch (error) {
-      alert("Gagal menganalisis. Periksa koneksi atau API Key.");
+      alert(`Gagal menganalisis: ${error.message}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -300,7 +342,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6 animate-in slide-in-from-right-4 duration-300">
-      <button onClick={closeDetail} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 font-medium transition-colors bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+      <button onClick={closeDetail} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 font-medium transition-colors bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm w-fit">
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
 
@@ -320,7 +362,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-          {/* CHECKLIST */}
           <div>
             <h3 className="flex items-center gap-2 font-bold text-lg mb-4 text-slate-800"><CheckSquare className="text-blue-600 w-5 h-5"/> Checklist Pasca-Rilis</h3>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
@@ -330,14 +371,13 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
             <div className="space-y-3">
               {campaign.checklist.map(task => (
                 <label key={task.id} className="flex items-start gap-3 cursor-pointer group">
-                  <input type="checkbox" checked={task.done} onChange={() => handleToggleChecklist(task.id)} className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                  <input type="checkbox" checked={task.done} onChange={() => handleToggleChecklist(task.id)} className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0" />
                   <span className={`text-sm leading-relaxed ${task.done ? 'text-slate-400 line-through' : 'text-slate-700 group-hover:text-slate-900'}`}>{task.text}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* PERFORMANCE ANALYZER */}
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
             <h3 className="flex items-center gap-2 font-bold text-lg mb-2 text-slate-800"><LineChart className="text-purple-600 w-5 h-5"/> Analisis Performa AI</h3>
             <p className="text-sm text-slate-500 mb-6">Masukkan data hasil iklan terbaru Anda untuk mendapatkan rekomendasi optimasi.</p>
@@ -354,7 +394,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
               </button>
             </div>
 
-            {/* Riwayat Analisis */}
             {campaign.analyses && campaign.analyses.length > 0 && (
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Riwayat Evaluasi</h4>
@@ -375,7 +414,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
           </div>
         </div>
 
-        {/* BLUEPRINT DETAIL (Restored Beautiful UI) */}
         <div className="border-t border-slate-100 pt-8 mt-4">
           <h3 className="font-extrabold text-2xl mb-6 flex items-center gap-2 text-slate-900"><Target className="w-6 h-6 text-blue-600"/> Setup Blueprint</h3>
           
@@ -427,7 +465,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
             <div><h4 className="text-sm font-bold text-white mb-1 uppercase tracking-wider text-slate-400">Pro Tip</h4><p className="text-slate-200">{campaign.blueprint.proTip}</p></div>
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -440,15 +477,14 @@ function Chatbot({ apiKey, contextData }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'model', text: 'Halo! Ada pertanyaan tentang Meta Ads atau butuh bantuan optimasi?' }]);
+  const [messages, setMessages] = useState([{ role: 'assistant', content: 'Halo! Ada pertanyaan tentang Meta Ads atau butuh bantuan optimasi?' }]);
   const endRef = useRef(null);
 
   useEffect(() => { if (endRef.current) endRef.current.scrollIntoView({ behavior: 'smooth' }); }, [messages, isOpen]);
 
-  // Method to allow parent to inject messages
   useEffect(() => {
     if (contextData?.externalMessage) {
-      setMessages(prev => [...prev, { role: 'model', text: contextData.externalMessage }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: contextData.externalMessage }]);
       setIsOpen(true);
     }
   }, [contextData?.externalMessage]);
@@ -456,24 +492,28 @@ function Chatbot({ apiKey, contextData }) {
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    const newMsg = { role: 'user', text: input };
-    setMessages(prev => [...prev, newMsg]); setInput(''); setIsTyping(true);
+    
+    const newMsg = { role: 'user', content: input };
+    setMessages(prev => [...prev, newMsg]); 
+    setInput(''); 
+    setIsTyping(true);
 
-    let sysContext = `Anda asisten Meta Ads. Jawab ringkas dan solutif. `;
+    let sysContext = `Anda asisten Meta Ads. Jawab ringkas dan solutif.`;
     if (contextData?.activeTab === 'campaignDetail' && contextData?.campaign) {
-       sysContext += `Konteks User: Sedang melihat kampanye "${contextData.campaign.blueprint.campaignName}", Objektif: ${contextData.campaign.formData.goal}.`;
+       sysContext += `Konteks: Sedang melihat kampanye "${contextData.campaign.blueprint.campaignName}".`;
     }
 
+    const groqMessages = [
+      { role: 'system', content: sysContext },
+      ...messages.map(m => ({ role: m.role, content: m.content })),
+      newMsg
+    ];
+
     try {
-      const apiContents = messages.concat(newMsg).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: apiContents, systemInstruction: { parts: [{ text: sysContext }] } })
-      });
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'model', text: data.candidates[0].content.parts[0].text }]);
+      const responseText = await callGroqAPI(groqMessages, apiKey, false);
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'model', text: "Maaf, koneksi AI terputus." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Maaf, koneksi AI terputus. (${err.message})` }]);
     } finally { setIsTyping(false); }
   };
 
@@ -489,7 +529,7 @@ function Chatbot({ apiKey, contextData }) {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in`}>
                 <div className={`max-w-[85%] rounded-2xl p-3.5 text-sm shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
-                  {msg.text}
+                  {msg.content}
                 </div>
               </div>
             ))}
@@ -510,42 +550,29 @@ function Chatbot({ apiKey, contextData }) {
 }
 
 // ==========================================
-// COMPONENT 5: MAIN APP (State & Layout)
+// COMPONENT 5: MAIN APP
 // ==========================================
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'new', 'dashboard', 'campaignDetail'
+  const [activeTab, setActiveTab] = useState('dashboard'); 
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
-  const [chatMessageQueue, setChatMessageQueue] = useState(null); // To pass messages from wizard to chat
+  const [chatMessageQueue, setChatMessageQueue] = useState(null); 
 
-  // --- LOCAL STORAGE PERSISTENCE ---
   const [campaigns, setCampaigns] = useState(() => {
     try {
       const saved = localStorage.getItem('metaAdsCampaigns_v2');
       return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error("Failed to load campaigns", e);
-      return [];
-    }
+    } catch (e) { return []; }
   });
 
-  useEffect(() => {
-    localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns));
-  }, [campaigns]);
+  useEffect(() => { localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns)); }, [campaigns]);
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  // ---> MENGGUNAKAN KUNCI GROQ DARI VERCEL <---
+  const apiKey = ""; 
 
-  // Hubungkan komponen anak dengan fungsi parent
-  const openCampaign = (campaign) => {
-    setSelectedCampaignId(campaign.id);
-    setActiveTab('campaignDetail');
-  };
-
-  const updateCampaign = (updatedCampaign) => {
-    setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c));
-  };
-
+  const openCampaign = (campaign) => { setSelectedCampaignId(campaign.id); setActiveTab('campaignDetail'); };
+  const updateCampaign = (updatedCampaign) => { setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c)); };
   const deleteCampaign = (id) => {
-    if (confirm('Yakin ingin menghapus kampanye ini dari riwayat?')) {
+    if (confirm('Yakin ingin menghapus kampanye ini?')) {
       setCampaigns(prev => prev.filter(c => c.id !== id));
       if (selectedCampaignId === id) setActiveTab('dashboard');
     }
@@ -555,7 +582,6 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200 pb-24">
-      {/* Navbar Induk */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-20 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xl cursor-pointer" onClick={() => setActiveTab('dashboard')}>
           <Target className="w-6 h-6" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
@@ -570,38 +596,13 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         </div>
       </header>
 
-      {/* Konten Utama */}
       <main>
-        {activeTab === 'new' && (
-           <Wizard 
-             setActiveTab={setActiveTab} 
-             setCampaigns={setCampaigns} 
-             apiKey={apiKey} 
-             addChatMessage={(msg) => setChatMessageQueue(msg)} 
-           />
-        )}
-        {activeTab === 'dashboard' && (
-           <Dashboard 
-             campaigns={campaigns} 
-             openCampaign={openCampaign} 
-             deleteCampaign={deleteCampaign}
-           />
-        )}
-        {activeTab === 'campaignDetail' && activeCampaign && (
-           <CampaignDetail 
-             campaign={activeCampaign} 
-             closeDetail={() => setActiveTab('dashboard')} 
-             updateCampaign={updateCampaign} 
-             apiKey={apiKey} 
-           />
-        )}
+        {activeTab === 'new' && <Wizard setActiveTab={setActiveTab} setCampaigns={setCampaigns} apiKey={apiKey} addChatMessage={setChatMessageQueue} />}
+        {activeTab === 'dashboard' && <Dashboard campaigns={campaigns} openCampaign={openCampaign} deleteCampaign={deleteCampaign} />}
+        {activeTab === 'campaignDetail' && activeCampaign && <CampaignDetail campaign={activeCampaign} closeDetail={() => setActiveTab('dashboard')} updateCampaign={updateCampaign} apiKey={apiKey} />}
       </main>
 
-      {/* Chatbot (Selalu hadir di semua layar) */}
-      <Chatbot 
-         apiKey={apiKey} 
-         contextData={{ activeTab, campaign: activeCampaign, externalMessage: chatMessageQueue }} 
-      />
+      <Chatbot apiKey={apiKey} contextData={{ activeTab, campaign: activeCampaign, externalMessage: chatMessageQueue }} />
     </div>
   );
 }
