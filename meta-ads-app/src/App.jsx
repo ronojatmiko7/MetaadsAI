@@ -300,11 +300,12 @@ function Dashboard({ campaigns, openCampaign, deleteCampaign }) {
 }
 
 // ==========================================
-// COMPONENT 3: CAMPAIGN DETAIL (Manajemen + Analisis)
+// COMPONENT 3: CAMPAIGN DETAIL (Manajemen + Analisis + Generate Angle)
 // ==========================================
 function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
   const [analysisForm, setAnalysisForm] = useState({ spend: '', results: '', ctr: '', cpc: '' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGeneratingAngle, setIsGeneratingAngle] = useState(false);
 
   if (!campaign) return null;
   const progress = Math.round((campaign.checklist.filter(t => t.done).length / campaign.checklist.length) * 100);
@@ -340,10 +341,53 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     }
   };
 
+  // FITUR BARU: GENERATE ANGLE TAMBAHAN
+  const handleGenerateNewAngle = async () => {
+    setIsGeneratingAngle(true);
+    const existingAngles = campaign.blueprint.creativeMatrix.map(a => a.angleName).join(', ');
+    
+    const prompt = `Anda adalah expert Meta Ads. Buat HANYA SATU angle iklan BARU untuk produk ini yang BERBEDA dari angle yang sudah ada.
+    Produk: ${campaign.formData.product}
+    Audiens: ${campaign.formData.audience}
+    Angle yang SUDAH ADA (Jangan gunakan angle ini lagi): ${existingAngles}
+
+    Kembalikan HANYA format JSON valid persis seperti ini:
+    {
+      "angleName": "Nama Angle Baru (Unik)",
+      "primaryText": "Caption iklan menarik (maks 3 kalimat)",
+      "headline": "Judul pendek memikat",
+      "description": "Deskripsi singkat / penawaran",
+      "callToAction": "Tombol CTA (misal: Beli Sekarang)",
+      "format": "Gambar Statis / Video Pendek"
+    }`;
+
+    const messages = [
+      { role: "system", content: "Kembalikan hanya JSON." },
+      { role: "user", content: prompt }
+    ];
+
+    try {
+      const resultText = await callGroqAPI(messages, apiKey, true);
+      const newAngle = parseAIResponse(resultText);
+      
+      // Tambahkan angle baru ke dalam array creativeMatrix yang ada
+      const updatedMatrix = [...campaign.blueprint.creativeMatrix, newAngle];
+      
+      updateCampaign({
+        ...campaign,
+        blueprint: { ...campaign.blueprint, creativeMatrix: updatedMatrix }
+      });
+    } catch (error) {
+      alert(`Gagal membuat angle baru: ${error.message}`);
+    } finally {
+      setIsGeneratingAngle(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-6 animate-in slide-in-from-right-4 duration-300">
       <button onClick={closeDetail} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 font-medium transition-colors bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm w-fit">
-        <ArrowLeft className="w-4 h-4" /> Kembali
+        <ArrowLeft className="w-4 h-4" /> Kembali ke Dashboard
       </button>
 
       <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm mb-8">
@@ -458,6 +502,20 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                 </div>
               </div>
             ))}
+            
+            {/* TOMBOL GENERATE ANGLE BARU */}
+            <button 
+              onClick={handleGenerateNewAngle} 
+              disabled={isGeneratingAngle}
+              className="mt-2 w-full md:w-auto bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isGeneratingAngle ? (
+                <span className="animate-pulse flex items-center gap-2">Memikirkan angle baru...</span>
+              ) : (
+                <><Lightbulb className="w-5 h-5" /> Generate Angle Baru (AI)</>
+              )}
+            </button>
+
           </div>
 
           <div className="bg-slate-900 rounded-2xl p-6 shadow-lg text-white mt-8 flex items-start gap-4">
@@ -518,7 +576,8 @@ function Chatbot({ apiKey, contextData }) {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    // Penyesuaian posisi bottom untuk menghindari tabrakan dengan mobile menu
+    <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col items-end">
       {isOpen && (
         <div className="bg-white w-[360px] max-w-[calc(100vw-32px)] h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border border-slate-200 flex flex-col mb-4 overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
           <div className="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md z-10">
@@ -550,7 +609,7 @@ function Chatbot({ apiKey, contextData }) {
 }
 
 // ==========================================
-// COMPONENT 5: MAIN APP
+// COMPONENT 5: MAIN APP (Layout Sidebar & Bottom Nav)
 // ==========================================
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard'); 
@@ -566,8 +625,8 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns)); }, [campaigns]);
 
-  // ---> KUNCI GROQ LANGSUNG DITANAMKAN DI SINI <---
-const apiKey = import.meta.env.VITE_GROQ_API_KEY; 
+  // ---> KUNCI DARI VERCEL TETAP AMAN <---
+  const apiKey = ""; 
 
   const openCampaign = (campaign) => { setSelectedCampaignId(campaign.id); setActiveTab('campaignDetail'); };
   const updateCampaign = (updatedCampaign) => { setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c)); };
@@ -581,27 +640,60 @@ const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   const activeCampaign = campaigns.find(c => c.id === selectedCampaignId);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200 pb-24">
-      <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-20 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-2 text-blue-600 font-bold text-xl cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-          <Target className="w-6 h-6" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
+    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200 overflow-hidden">
+      
+      {/* --- SIDEBAR UNTUK DESKTOP --- */}
+      <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shadow-sm z-10">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-2 text-blue-600 font-extrabold text-2xl">
+          <Target className="w-8 h-8" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner">
-          <button onClick={() => setActiveTab('new')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'new' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
-            <PlusCircle className="w-4 h-4" /> <span className="hidden sm:inline">Buat Baru</span>
+        <nav className="p-4 space-y-3 mt-2">
+          <button 
+            onClick={() => {setActiveTab('dashboard'); setSelectedCampaignId(null);}} 
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === 'dashboard' || activeTab === 'campaignDetail' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+          >
+            <LayoutDashboard className="w-5 h-5" /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'dashboard' || activeTab === 'campaignDetail' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
-            <LayoutDashboard className="w-4 h-4" /> <span className="hidden sm:inline">Dashboard</span>
+          <button 
+            onClick={() => {setActiveTab('new'); setSelectedCampaignId(null);}} 
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === 'new' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+          >
+            <PlusCircle className="w-5 h-5" /> Setup Kampanye
           </button>
-        </div>
-      </header>
+        </nav>
+      </aside>
 
-      <main>
+      {/* --- HEADER KHUSUS MOBILE --- */}
+      <div className="md:hidden fixed top-0 w-full bg-white border-b border-slate-200 p-4 flex items-center justify-center gap-2 text-blue-600 font-extrabold text-xl z-20 shadow-sm">
+        <Target className="w-6 h-6" /><span>MetaAds<span className="text-slate-800">Pro</span></span>
+      </div>
+
+      {/* --- AREA KONTEN UTAMA --- */}
+      <main className="flex-1 h-full overflow-y-auto pt-16 md:pt-0 pb-24 md:pb-0 relative scroll-smooth">
         {activeTab === 'new' && <Wizard setActiveTab={setActiveTab} setCampaigns={setCampaigns} apiKey={apiKey} addChatMessage={setChatMessageQueue} />}
         {activeTab === 'dashboard' && <Dashboard campaigns={campaigns} openCampaign={openCampaign} deleteCampaign={deleteCampaign} />}
         {activeTab === 'campaignDetail' && activeCampaign && <CampaignDetail campaign={activeCampaign} closeDetail={() => setActiveTab('dashboard')} updateCampaign={updateCampaign} apiKey={apiKey} />}
       </main>
 
+      {/* --- BOTTOM NAVIGATION UNTUK MOBILE --- */}
+      <nav className="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around p-2 z-20 pb-safe shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
+        <button 
+          onClick={() => {setActiveTab('dashboard'); setSelectedCampaignId(null);}} 
+          className={`flex flex-col items-center gap-1 p-2 w-full ${activeTab === 'dashboard' || activeTab === 'campaignDetail' ? 'text-blue-600' : 'text-slate-400'}`}
+        >
+          <LayoutDashboard className="w-6 h-6" />
+          <span className="text-[10px] font-bold">Dashboard</span>
+        </button>
+        <button 
+          onClick={() => {setActiveTab('new'); setSelectedCampaignId(null);}} 
+          className={`flex flex-col items-center gap-1 p-2 w-full ${activeTab === 'new' ? 'text-blue-600' : 'text-slate-400'}`}
+        >
+          <PlusCircle className="w-6 h-6" />
+          <span className="text-[10px] font-bold">Setup Baru</span>
+        </button>
+      </nav>
+
+      {/* --- CHATBOT --- */}
       <Chatbot apiKey={apiKey} contextData={{ activeTab, campaign: activeCampaign, externalMessage: chatMessageQueue }} />
     </div>
   );
