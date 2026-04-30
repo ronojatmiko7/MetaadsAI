@@ -5,7 +5,7 @@ import {
   Users, MessageCircle, X, Send, Bot, PlusCircle, LayoutDashboard, 
   CheckSquare, LineChart, ChevronRight, Calculator, ShoppingCart, Store, Trash2,
   KeyRound, ShieldCheck, AlertTriangle, ListChecks, Palette, Activity, Eye, Images,
-  AlertOctagon, Info
+  AlertOctagon, Info, Copy, Check
 } from 'lucide-react';
 
 // --- CONSTANTS ---
@@ -149,7 +149,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
     setErrorMsg('');
     setStep(7); 
     
-    // SUPER PROMPT 2026: Broad Audience + 5 Formats + Salt in Wound Mandate
+    // SUPER PROMPT 2026: Broad + 5 Formats + Salt in Wound
     const systemPrompt = `Anda adalah Top 1% Media Buyer Meta Ads expert Indonesia tahun 2026. Berdasarkan input user, buat blueprint JSON valid persis seperti skema ini (Jangan tambahkan teks lain selain JSON!).
 
     ATURAN BEST PRACTICE 2026:
@@ -158,7 +158,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
     3. Creative Frameworks: WAJIB buat 5 matriks kreatif dengan kerangka yang BERBEDA.
        - WAJIB 1 Angle menggunakan framework "Put Salt in Wound" (Agitasi masalah audiens secara tajam/menyakitkan sebelum memberikan solusi).
        - 4 Angle lainnya gunakan variasi seperti: Testimonial/Social Proof, FOMO/Offer, Edukasi/Myth-busting, Benefit Driven, dll.
-    4. Creative Formats: WAJIB gunakan format yang bervariasi di dalam 5 angle tersebut. Pastikan ada minimal 1 Gambar Statis, 1 Video Pendek, dan 1 Carousel. Sesuaikan saran dengan aset yang dimiliki user jika memungkinkan.
+    4. Creative Formats: WAJIB gunakan format yang bervariasi. Pastikan ada kombinasi Gambar Statis, Video Pendek, atau Carousel sesuai input user.
     5. WAJIB sertakan "visualHook" (apa yang harus tampil di 3 detik pertama video atau di gambar utama agar orang berhenti scroll).
 
     Format JSON (HARUS SAMA PERSIS NAMA KEY-NYA):
@@ -199,16 +199,16 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         blueprint: parsedBlueprint,
         checklist: [
           { id: 1, text: 'Verifikasi Domain & Setup Meta Pixel/CAPI di website', done: false },
-          { id: 2, text: 'Buat 5 variasi kreatif (Gambar/Video/Carousel) sesuai Blueprint', done: false },
-          { id: 3, text: 'Aktifkan Advantage+ Audience (Broad Targeting)', done: false },
-          { id: 4, text: 'Gunakan minimal 3 variasi Primary Text per Ad (Dynamic)', done: false },
+          { id: 2, text: 'Buat 5 variasi kreatif (Gambar/Video/Carousel) sesuai panduan Setup', done: false },
+          { id: 3, text: 'Gunakan fitur Dynamic Creative (DCO) jika opsi tersedia', done: false },
+          { id: 4, text: 'Aktifkan Advantage+ Audience (Broad Targeting)', done: false },
           { id: 5, text: 'FASE PEMBELAJARAN: DILARANG KERAS mematikan/edit iklan selama 72 JAM PERTAMA', done: false },
         ],
         analyses: []
       };
       
       setCampaigns(prev => [newCampaign, ...prev]);
-      addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" dengan 5 Framework Kreatif (termasuk teknik "Put Salt in Wound" dan berbagai format) telah siap! Segera masuk ke menu Monitoring jika iklan sudah berjalan.`);
+      addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" dengan 5 Framework Kreatif (termasuk teknik "Put Salt in Wound" dan berbagai format) telah siap! Segera ikuti langkah di tab "Setup & Strategi".`);
       
       setTimeout(() => { setActiveTab('dashboard'); }, 2000);
 
@@ -229,7 +229,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         <div className="text-center mt-12">
           <div className="bg-blue-100 text-blue-700 p-5 rounded-full inline-block mb-6"><Target className="w-12 h-12" /></div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Mulai Setup. <br/>Cetak Winning Ads.</h1>
-          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Framework Meta Ads standar 2026 ditenagai Groq AI. Hasilkan variasi format konten & teknik copywriting "Put Salt in Wound" secepat kilat.</p>
+          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Framework Meta Ads standar 2026 ditenagai AI. Dapatkan panduan teknis Ads Manager & copywriting "Put Salt in Wound" secepat kilat.</p>
           <button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-full text-lg shadow-lg flex items-center gap-2 mx-auto">Mulai Setup Baru <ArrowRight className="w-5 h-5" /></button>
           {!apiKey && <p className="text-sm text-amber-600 mt-4 font-medium flex items-center justify-center gap-1"><AlertTriangle className="w-4 h-4"/> Anda akan diminta memasukkan API Key saat memulai.</p>}
         </div>
@@ -302,7 +302,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
               </div>
             ))}
           </div>
-          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Pilih format yang Anda sanggup produksi. AI akan mencoba mendistribusikan <b>5 Ide Iklan</b> ke dalam format-format tersebut untuk hasil yang optimal.</p>
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Pilih format yang Anda sanggup produksi. Sangat disarankan memilih lebih dari 1 format (misal: Video & Carousel).</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={handleNext} disabled={formData.assets.length === 0} className="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3 px-8 rounded-full flex gap-2">Review Data <ArrowRight className="w-5 h-5" /></button>
@@ -327,7 +327,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
              </div>
           </div>
 
-          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Setelah ini, AI akan memproses data Anda untuk meracik <b>5 Framework Iklan</b> (Termasuk teknik "Put Salt in Wound", variasi format Video/Carousel/Gambar, dan Visual Hook-nya).</p>
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Setelah ini, AI akan memproses data Anda untuk meracik <b>5 Framework Iklan</b> beserta panduan lengkap cara Setup di Ads Manager.</p>
           
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
@@ -340,7 +340,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95">
           <div className="relative w-20 h-20 mb-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           <h2 className="text-2xl font-bold mb-2">Groq sedang menganalisis...</h2>
-          <p className="text-slate-500 max-w-sm mx-auto">Menulis framework copywriting (termasuk Agitasi Ekstrem), mendistribusikan format konten, dan meracik rekomendasi struktur Advantage+ Meta...</p>
+          <p className="text-slate-500 max-w-sm mx-auto">Menulis copywriting (termasuk teknik "Salt in Wound"), menyiapkan panduan struktur Kampanye, dan mendistribusikan format konten...</p>
         </div>
       )}
     </div>
@@ -356,7 +356,7 @@ function Dashboard({ campaigns, openCampaign, deleteCampaign }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Riwayat Kampanye</h1>
-          <p className="text-slate-500 mt-2">Data tersimpan lokal. Klik kampanye untuk masuk ke menu Monitoring & Optimasi.</p>
+          <p className="text-slate-500 mt-2">Data tersimpan lokal. Klik kampanye untuk melihat panduan Setup & Monitoring.</p>
         </div>
         <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 w-fit mt-4 md:mt-0">
           <Briefcase className="w-5 h-5"/> {campaigns.length} Kampanye
@@ -409,10 +409,11 @@ function Dashboard({ campaigns, openCampaign, deleteCampaign }) {
 // COMPONENT 3: CAMPAIGN DETAIL (TABS TERPISAH)
 // ==========================================
 function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
-  const [activeInnerTab, setActiveInnerTab] = useState('setup'); // 'setup', 'kreatif', 'monitoring'
+  const [activeInnerTab, setActiveInnerTab] = useState('setup'); 
   const [analysisForm, setAnalysisForm] = useState({ spend: '', results: '', ctr: '', cpc: '', frequency: '', impressions: '' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingAngle, setIsGeneratingAngle] = useState(false);
+  const [copiedName, setCopiedName] = useState(false);
 
   if (!campaign) return null;
   const progress = Math.round((campaign.checklist.filter(t => t.done).length / campaign.checklist.length) * 100);
@@ -422,11 +423,21 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     updateCampaign({ ...campaign, checklist: updatedChecklist });
   };
 
+  const handleCopy = (text) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    setCopiedName(true);
+    setTimeout(() => setCopiedName(false), 2000);
+  };
+
   const handleAnalyze = async () => {
     if(!apiKey) return alert("API Key belum diatur. Silakan atur di menu.");
     setIsAnalyzing(true);
     
-    // NEW PROMPT: Data-driven & Contextual 2026 Feedback
     const prompt = `Anda adalah Senior Meta Ads Media Buyer Indonesia 2026 dengan spesialisasi Advantage+ (Broad Targeting, CBO/ASC).
 
     Konteks Kampanye:
@@ -522,7 +533,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     return <ImageIcon className="w-4 h-4" />;
   };
 
-  // Real-time calculations for Monitoring
   const currentCpa = (analysisForm.spend && analysisForm.results && Number(analysisForm.results) > 0) 
       ? Math.round(Number(analysisForm.spend) / Number(analysisForm.results)) 
       : 0;
@@ -539,7 +549,9 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">{campaign.blueprint.campaignName}</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 flex items-center gap-3">
+              {campaign.blueprint.campaignName}
+            </h1>
             <p className="text-slate-500 flex flex-wrap gap-2">
               <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold uppercase">{campaign.blueprint.objective}</span>
               <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">{campaign.date}</span>
@@ -568,21 +580,103 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
       {/* TAB CONTENT: SETUP & STRATEGI */}
       {activeInnerTab === 'setup' && (
         <div className="animate-in fade-in space-y-6">
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
-               <h4 className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Target className="w-4 h-4"/> Strategi Budget</h4>
+               <h4 className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Target className="w-4 h-4"/> Strategi Budget AI</h4>
                <p className="text-slate-800 font-medium leading-relaxed">{campaign.blueprint.budgetStrategy}</p>
             </div>
             <div className="bg-purple-50/50 rounded-2xl p-6 border border-purple-100">
-               <h4 className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Users className="w-4 h-4"/> Sistem Targeting</h4>
+               <h4 className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Users className="w-4 h-4"/> Sistem Targeting AI</h4>
                <p className="text-slate-800 font-medium leading-relaxed">{campaign.blueprint.targeting}</p>
             </div>
           </div>
 
+          {/* NEW SECTION: DETAILED CAMPAIGN SETUP GUIDE */}
           <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm">
-            <h3 className="flex items-center gap-2 font-bold text-xl mb-4 text-slate-800"><CheckSquare className="text-blue-600 w-6 h-6"/> Checklist 2026 Anti-Boncos</h3>
+            <h3 className="font-extrabold text-xl mb-6 flex items-center gap-3 text-slate-900">
+              <Info className="w-6 h-6 text-blue-600"/> Panduan Setup di Meta Ads Manager
+            </h3>
+
+            {campaign.formData.goal === 'sales' && (
+               <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-8 flex gap-3 items-start shadow-sm">
+                 <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+                 <p className="text-sm text-amber-900 leading-relaxed font-medium">
+                   <strong>Rekomendasi Utama:</strong> Karena tujuan Anda adalah <b>Penjualan</b>, sangat direkomendasikan memilih <strong>Advantage+ Shopping Campaign (ASC)</strong> saat Anda mengklik tombol "Buat Kampanye" di Meta. Ini adalah mesin machine-learning terbaik Meta saat ini.
+                 </p>
+               </div>
+            )}
+
+            <div className="space-y-8">
+              {/* Level 1: Campaign */}
+              <div className="relative pl-6 border-l-2 border-slate-200">
+                <div className="absolute -left-3 top-0 bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white shadow-sm">1</div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">Level 1: Campaign</div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-slate-700 text-sm">Nama Kampanye:</span>
+                    <button onClick={() => handleCopy(campaign.blueprint.campaignName)} className="text-xs bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition-colors">
+                      {copiedName ? <><Check className="w-3.5 h-3.5 text-green-600"/> Dicopy</> : <><Copy className="w-3.5 h-3.5"/> Copy</>}
+                    </button>
+                  </div>
+                  <div className="font-mono bg-white border border-slate-200 p-3 rounded-lg text-sm text-slate-800 break-all mb-4">
+                    {campaign.blueprint.campaignName}
+                  </div>
+                  <p className="text-sm text-slate-600 flex items-center gap-2"><span className="font-medium text-slate-700">Pilih Objective:</span> <strong className="text-slate-900 bg-blue-100 px-2 py-0.5 rounded">{campaign.blueprint.objective}</strong></p>
+                </div>
+              </div>
+
+              {/* Level 2: Ad Set */}
+              <div className="relative pl-6 border-l-2 border-slate-200">
+                <div className="absolute -left-3 top-0 bg-purple-100 text-purple-600 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white shadow-sm">2</div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">Level 2: Ad Set</div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="font-medium text-slate-800 text-sm mb-4">Buat <strong>1 Ad Set</strong> saja agar algoritma leluasa dan budget tidak terpecah sia-sia.</p>
+                  <ul className="text-sm text-slate-600 list-none space-y-3">
+                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500 shrink-0 mt-0.5"/><span className="font-medium text-slate-800">Audience:</span> Biarkan Broad (Advantage+ Audience). Meta akan mencari pembeli berdasarkan interaksi pada materi kreatif Anda.</li>
+                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500 shrink-0 mt-0.5"/><span className="font-medium text-slate-800">Placement:</span> Pilih Advantage+ Placements (Otomatis).</li>
+                    <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500 shrink-0 mt-0.5"/><span className="font-medium text-slate-800">Optimization:</span> Pilih Event konversi utama (misal: Purchase / Lead).</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Level 3: Ads */}
+              <div className="relative pl-6 border-l-2 border-transparent">
+                <div className="absolute -left-3 top-0 bg-emerald-100 text-emerald-600 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white shadow-sm">3</div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">Level 3: Ads (Kreatif)</div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="font-medium text-slate-800 text-sm mb-4">Masuk ke level Ads. Kami merekomendasikan menggunakan <b>Dynamic Creative (DCO)</b> atau mengunggah 5 Angle dari Bank Kreatif Anda.</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {campaign.blueprint.creativeMatrix.map((ad, idx) => (
+                      <div key={idx} className="bg-white border border-slate-200 rounded-lg p-4 hover:border-emerald-300 transition-colors shadow-sm">
+                        <div className="font-bold text-xs text-slate-800 mb-1 line-clamp-1">{idx + 1}. {ad.angleName}</div>
+                        <div className="text-[10px] font-black text-emerald-600 mb-3 uppercase tracking-wider flex items-center gap-1">{getFormatIcon(ad.format)} {ad.format}</div>
+                        <div className="text-xs text-slate-500">
+                          <p className="line-clamp-2 italic mb-1">"{ad.primaryText}"</p>
+                          <p className="font-semibold text-slate-700">{ad.headline}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setActiveInnerTab('kreatif')} className="mt-4 w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold py-2 rounded-lg text-sm transition-colors">
+                    Lihat Detail Bank Kreatif & Copywriting
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm">
+            <h3 className="flex items-center gap-2 font-bold text-xl mb-4 text-slate-800"><CheckSquare className="text-blue-600 w-6 h-6"/> Pre-Flight Checklist</h3>
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
-              <div className="flex justify-between text-sm mb-2 font-bold"><span className="text-slate-600">Progres Keamanan Rilis</span><span className="text-blue-600">{progress}%</span></div>
+              <div className="flex justify-between text-sm mb-2 font-bold"><span className="text-slate-600">Keamanan Rilis</span><span className="text-blue-600">{progress}%</span></div>
               <div className="w-full bg-slate-200 h-2 rounded-full"><div className="bg-blue-600 h-2 rounded-full transition-all" style={{width: `${progress}%`}}></div></div>
             </div>
             <div className="space-y-4">
@@ -648,12 +742,18 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
 
                   <div className="space-y-4">
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Teks Utama (Primary Text)</span>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Teks Utama (Primary Text)</span>
+                        <button onClick={() => handleCopy(ad.primaryText)} className="text-blue-600 hover:text-blue-800"><Copy className="w-3.5 h-3.5"/></button>
+                      </div>
                       <p className="text-slate-800 text-sm whitespace-pre-wrap leading-relaxed">{ad.primaryText}</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Judul (Headline)</span>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Judul (Headline)</span>
+                          <button onClick={() => handleCopy(ad.headline)} className="text-blue-600 hover:text-blue-800"><Copy className="w-3.5 h-3.5"/></button>
+                        </div>
                         <p className="font-bold text-slate-900">{ad.headline}</p>
                       </div>
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-between">
