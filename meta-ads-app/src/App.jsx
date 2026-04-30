@@ -36,6 +36,17 @@ const parseAIResponse = (text) => {
   }
 };
 
+// --- HELPER: SIMPLE CHAT MARKDOWN PARSER ---
+const formatChatText = (text) => {
+  if (!text) return { __html: '' };
+  let html = text
+    .replace(/</g, "&lt;").replace(/>/g, "&gt;") // Sanitize HTML dasar
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-blue-900">$1</strong>') // Bold dengan warna sedikit lebih gelap
+    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>') // Italic
+    .replace(/\n/g, '<br />'); // Baris baru
+  return { __html: html };
+};
+
 // ==========================================
 // GROQ API CALL HELPER
 // ==========================================
@@ -419,6 +430,10 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingAngle, setIsGeneratingAngle] = useState(false);
   const [copiedName, setCopiedName] = useState(false);
+  
+  // State untuk Edit Budget
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [tempBudget, setTempBudget] = useState(campaign.formData.budget);
 
   if (!campaign) return null;
   const progress = Math.round((campaign.checklist.filter(t => t.done).length / campaign.checklist.length) * 100);
@@ -437,6 +452,18 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     document.body.removeChild(el);
     setCopiedName(true);
     setTimeout(() => setCopiedName(false), 2000);
+  };
+
+  const handleSaveBudget = () => {
+    if (!tempBudget || Number(tempBudget) < 15000) {
+      alert("Budget minimal Rp 15.000");
+      return;
+    }
+    updateCampaign({
+      ...campaign,
+      formData: { ...campaign.formData, budget: tempBudget }
+    });
+    setIsEditingBudget(false);
   };
 
   const handleAnalyze = async () => {
@@ -562,9 +589,33 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
               <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">{campaign.date}</span>
             </p>
           </div>
+          
+          {/* BUDGET EDITING BOX */}
           <div className="text-left md:text-right bg-slate-50 p-4 rounded-2xl border border-slate-100 w-full md:w-auto">
             <p className="text-sm text-slate-500 mb-1 font-bold">Anggaran Harian</p>
-            <p className="text-2xl font-black text-slate-900">{formatRupiah(campaign.formData.budget)}</p>
+            {isEditingBudget ? (
+               <div className="flex items-center gap-2 mt-1 justify-start md:justify-end">
+                 <input 
+                   type="number" 
+                   value={tempBudget} 
+                   onChange={e => setTempBudget(e.target.value)} 
+                   className="w-32 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-base font-black text-slate-900 outline-none focus:border-blue-500" 
+                 />
+                 <button onClick={handleSaveBudget} className="bg-green-100 text-green-700 p-2 rounded-lg hover:bg-green-200 transition-colors"><Check className="w-4 h-4"/></button>
+                 <button onClick={() => setIsEditingBudget(false)} className="bg-slate-200 text-slate-600 p-2 rounded-lg hover:bg-slate-300 transition-colors"><X className="w-4 h-4"/></button>
+               </div>
+            ) : (
+              <div className="flex items-center gap-2 justify-start md:justify-end">
+                <p className="text-2xl font-black text-slate-900">{formatRupiah(campaign.formData.budget)}</p>
+                <button 
+                  onClick={() => { setTempBudget(campaign.formData.budget); setIsEditingBudget(true); }} 
+                  className="text-slate-400 hover:text-blue-600 p-1 bg-white border border-slate-200 rounded-md hover:border-blue-300 transition-colors"
+                  title="Edit Budget Harian"
+                >
+                  <PenTool className="w-3.5 h-3.5"/>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -587,7 +638,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
         <div className="animate-in fade-in space-y-6">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* UPDATE: UI STRATEGI BUDGET AI PINTAR */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 md:p-8 border border-blue-100 col-span-1 md:col-span-2 shadow-sm">
                <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-4 flex items-center gap-2">
                  <Calculator className="w-5 h-5"/> Strategi Budget & Scaling AI
@@ -760,7 +810,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
         </div>
       )}
 
-      {/* TAB CONTENT: MONITORING AI (NEW DATA-DRIVEN VERSION) */}
+      {/* TAB CONTENT: MONITORING AI */}
       {activeInnerTab === 'monitoring' && (
         <div className="animate-in fade-in">
           <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 relative overflow-hidden shadow-sm">
@@ -769,19 +819,16 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
             <p className="text-slate-500 mb-8 max-w-2xl">Masukkan data terkini kampanye Anda. Metrik <span className="font-bold text-slate-700">Frequency</span> dan <span className="font-bold text-slate-700">Impressions</span> akan membantu AI memberikan analisis apakah Anda harus <em className="text-blue-600 font-medium">Scale Up</em>, <em className="text-red-500 font-medium">Matikan Iklan</em>, atau sekadar menunggu.</p>
             
             <div className="space-y-6 relative z-10 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-              {/* Form Baris 1: Konversi dasar */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">TOTAL SPEND (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.spend} onChange={e=>setAnalysisForm({...analysisForm, spend: e.target.value})} /></div>
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">HASIL KONVERSI</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.results} onChange={e=>setAnalysisForm({...analysisForm, results: e.target.value})} /></div>
                 
-                {/* Real-time CPA Calculator Box */}
                 <div className="bg-blue-600 text-white p-4 rounded-xl shadow-inner flex flex-col justify-center items-start">
                    <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">Real-time CPA (Cost per Action)</span>
                    <span className="text-2xl font-black">{currentCpa > 0 ? `Rp ${currentCpa.toLocaleString('id-ID')}` : '-'}</span>
                 </div>
               </div>
 
-              {/* Form Baris 2: Indikator Fatigue (CTR, Freq, Impressions) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-200 pt-4">
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">RATA-RATA CTR (%)</label><input type="number" step="0.1" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.ctr} onChange={e=>setAnalysisForm({...analysisForm, ctr: e.target.value})} /></div>
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">FREQUENCY</label><input type="number" step="0.1" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.frequency} onChange={e=>setAnalysisForm({...analysisForm, frequency: e.target.value})} /></div>
@@ -789,7 +836,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">CPC (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.cpc} onChange={e=>setAnalysisForm({...analysisForm, cpc: e.target.value})} /></div>
               </div>
 
-              {/* Warnings Peringatan Dini Cepat */}
               {(showCtrWarning || showFreqWarning) && (
                 <div className="flex flex-col gap-2 mt-2">
                    {showCtrWarning && <div className="bg-red-50 text-red-700 text-xs font-bold p-3 rounded-lg border border-red-100 flex items-center gap-2"><AlertOctagon className="w-4 h-4" /> Peringatan: CTR di bawah 1%. Periksa kembali Visual Hook 3 detik pertama Anda.</div>}
@@ -814,9 +860,10 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                          <div className="bg-slate-50 p-2 rounded-lg min-w-[80px]"><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">CTR</span><span className="font-black text-slate-900">{an.data.ctr}%</span></div>
                          {an.data.frequency && <div className="bg-slate-50 p-2 rounded-lg min-w-[80px]"><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Freq</span><span className="font-black text-slate-900">{an.data.frequency}x</span></div>}
                        </div>
-                       <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
-                         {an.insight}
-                       </div>
+                       <div 
+                         className="text-sm text-slate-800 leading-relaxed font-medium"
+                         dangerouslySetInnerHTML={formatChatText(an.insight)}
+                       />
                      </div>
                   ))}
                 </div>
@@ -832,7 +879,6 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
 // ==========================================
 // COMPONENT 4: CHATBOT (Floating Assistant dgn Memory Konteks)
 // ==========================================
-// Tambahkan ikon Clock kecil
 const Clock = (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
 
 function Chatbot({ apiKey, contextData, setShowSettings }) {
@@ -866,7 +912,6 @@ function Chatbot({ apiKey, contextData, setShowSettings }) {
     if(!forcedInput) setInput(''); 
     setIsTyping(true);
 
-    // UPDATE: SMART CONTEXT INJECTION (Chatbot sekarang tahu isi kampanye!)
     let sysContext = `Anda adalah Senior Meta Ads Media Buyer Indonesia 2026 yang sangat berpengalaman dan tajam dalam mengoptimasi data.\n\n`;
     
     if (contextData?.campaign) {
@@ -884,6 +929,7 @@ function Chatbot({ apiKey, contextData, setShowSettings }) {
     - Jawab dengan bahasa Indonesia santai tapi sangat profesional dan to-the-point.
     - SELALU hubungkan jawaban Anda dengan data kampanye user di atas (jika ada).
     - Berikan saran konkrit (misal: ASC, CBO, Advantage+).
+    - Jawab dalam format markdown yang rapi (Gunakan **bold** untuk penekanan, dan list berpoin untuk mempermudah dibaca).
     - Jika ditanya scaling/optimasi, tanyakan balik metrik terbaru (CTR, Freq, Spend) jika mereka belum menyebutkannya.`;
 
     const groqMessages = [
@@ -918,9 +964,10 @@ function Chatbot({ apiKey, contextData, setShowSettings }) {
           <div className="flex-1 overflow-y-auto p-4 bg-slate-50 flex flex-col gap-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in`}>
-                <div className={`max-w-[85%] rounded-2xl p-3.5 text-sm shadow-sm leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
-                  {msg.content}
-                </div>
+                <div 
+                  className={`max-w-[85%] rounded-2xl p-3.5 text-sm shadow-sm leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'}`}
+                  dangerouslySetInnerHTML={formatChatText(msg.content)}
+                />
               </div>
             ))}
             {isTyping && <div className="flex justify-start"><div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-4 shadow-sm flex gap-1"><span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span><span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75"></span><span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150"></span></div></div>}
