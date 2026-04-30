@@ -4,7 +4,8 @@ import {
   Rocket, CheckCircle2, Lightbulb, Crosshair, PenTool, RefreshCcw, 
   Users, MessageCircle, X, Send, Bot, PlusCircle, LayoutDashboard, 
   CheckSquare, LineChart, ChevronRight, Calculator, ShoppingCart, Store, Trash2,
-  KeyRound, ShieldCheck, AlertTriangle, ListChecks, Palette, Activity, Eye, Images
+  KeyRound, ShieldCheck, AlertTriangle, ListChecks, Palette, Activity, Eye, Images,
+  AlertOctagon, Info
 } from 'lucide-react';
 
 // --- CONSTANTS ---
@@ -146,9 +147,9 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
   const generateBlueprint = async () => {
     setIsGenerating(true);
     setErrorMsg('');
-    setStep(7); // Pindah ke step loading
+    setStep(7); 
     
-    // UPDATE SUPER PROMPT 2026: Multi-format & "Put Salt in Wound" Mandate
+    // SUPER PROMPT 2026: Broad Audience + 5 Formats + Salt in Wound Mandate
     const systemPrompt = `Anda adalah Top 1% Media Buyer Meta Ads expert Indonesia tahun 2026. Berdasarkan input user, buat blueprint JSON valid persis seperti skema ini (Jangan tambahkan teks lain selain JSON!).
 
     ATURAN BEST PRACTICE 2026:
@@ -214,7 +215,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
     } catch (err) {
       console.error(err);
       setErrorMsg(err.message || 'Gagal menyusun Blueprint. Silakan coba lagi.');
-      setStep(6); // Kembali ke halaman review
+      setStep(6); 
     } finally {
       setIsGenerating(false);
     }
@@ -309,7 +310,6 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         </div>
       )}
 
-      {/* STEP BARU: REVIEW SEBELUM GENERATE */}
       {step === 6 && (
         <div className="animate-in slide-in-from-right-8 duration-500">
           <h2 className="text-3xl font-bold mb-6">Review Setup Anda</h2>
@@ -410,7 +410,7 @@ function Dashboard({ campaigns, openCampaign, deleteCampaign }) {
 // ==========================================
 function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
   const [activeInnerTab, setActiveInnerTab] = useState('setup'); // 'setup', 'kreatif', 'monitoring'
-  const [analysisForm, setAnalysisForm] = useState({ spend: '', results: '', ctr: '', cpc: '' });
+  const [analysisForm, setAnalysisForm] = useState({ spend: '', results: '', ctr: '', cpc: '', frequency: '', impressions: '' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingAngle, setIsGeneratingAngle] = useState(false);
 
@@ -425,13 +425,34 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
   const handleAnalyze = async () => {
     if(!apiKey) return alert("API Key belum diatur. Silakan atur di menu.");
     setIsAnalyzing(true);
-    const prompt = `Anda adalah analis Data Meta Ads. Evaluasi kampanye ini.
-    Konteks: Tujuan ${campaign.formData.goal}, Budget Rp${campaign.formData.budget}.
-    Metrik Terkini: Spend: Rp${analysisForm.spend}, Konversi: ${analysisForm.results}, CTR: ${analysisForm.ctr}%, CPC: Rp${analysisForm.cpc}.
-    Tugas: Berikan 3 poin evaluasi singkat berdasarkan metrik (1. Status CPA/ROAS, 2. Deteksi Creative Fatigue jika CTR drop, 3. Action plan konkrit: haruskah scale budget, matikan iklan, atau ganti materi). Format teks biasa, padat.`;
+    
+    // NEW PROMPT: Data-driven & Contextual 2026 Feedback
+    const prompt = `Anda adalah Senior Meta Ads Media Buyer Indonesia 2026 dengan spesialisasi Advantage+ (Broad Targeting, CBO/ASC).
+
+    Konteks Kampanye:
+    - Nama: ${campaign.blueprint.campaignName}
+    - Goal: ${campaign.formData.goal}
+    - Budget Harian: Rp${campaign.formData.budget}
+    - Mulai Setup: ${campaign.date}
+    - Produk: ${campaign.formData.product}
+    - Audiens: ${campaign.formData.audience}
+
+    Data Terkini:
+    - Spend: Rp${analysisForm.spend}
+    - Konversi/Results: ${analysisForm.results}
+    - CTR: ${analysisForm.ctr}%
+    - CPC: Rp${analysisForm.cpc}
+    - Frequency: ${analysisForm.frequency || 'Belum diinput'}
+    - Impressions/Reach: ${analysisForm.impressions || 'Belum diinput'}
+
+    Tugas Anda (Jawab padat, tegas, dan bahasa Indonesia):
+    1. Evaluasi CPA/Performa (Bandingkan dengan benchmark Indonesia: CPM rata-rata Rp40k-80k, CTR 1-3%).
+    2. Deteksi Creative Fatigue: Analisis korelasi CTR yang drop, Frequency naik, dan Impressions.
+    3. Status Learning Phase: Apakah sudah aman (idealnya butuh ~50 konversi)?
+    4. Action Plan Konkrit & Prioritas: Haruskah Scale up budget (max 20%), Kill angle yang buruk, Tambah materi kreatif baru, atau Jangan Sentuh dulu?`;
 
     const messages = [
-      { role: "system", content: "Anda adalah asisten Meta Ads profesional." },
+      { role: "system", content: "Anda adalah analis pakar Meta Ads yang kejam dan jujur berdasarkan data." },
       { role: "user", content: prompt }
     ];
 
@@ -441,7 +462,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
       const updatedAnalyses = [newAnalysis, ...(campaign.analyses || [])];
       
       updateCampaign({ ...campaign, analyses: updatedAnalyses });
-      setAnalysisForm({ spend: '', results: '', ctr: '', cpc: '' }); 
+      setAnalysisForm({ spend: '', results: '', ctr: '', cpc: '', frequency: '', impressions: '' }); 
     } catch (error) {
       alert(`Gagal menganalisis: ${error.message}`);
     } finally {
@@ -494,13 +515,19 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     }
   };
 
-  // Helper function to render correct format icon
   const getFormatIcon = (formatStr) => {
     const f = formatStr.toLowerCase();
     if (f.includes('video')) return <Video className="w-4 h-4" />;
     if (f.includes('carousel')) return <Images className="w-4 h-4" />;
     return <ImageIcon className="w-4 h-4" />;
   };
+
+  // Real-time calculations for Monitoring
+  const currentCpa = (analysisForm.spend && analysisForm.results && Number(analysisForm.results) > 0) 
+      ? Math.round(Number(analysisForm.spend) / Number(analysisForm.results)) 
+      : 0;
+  const showCtrWarning = analysisForm.ctr && Number(analysisForm.ctr) < 1;
+  const showFreqWarning = analysisForm.frequency && Number(analysisForm.frequency) > 2.5;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-6 animate-in slide-in-from-right-4 duration-300">
@@ -645,38 +672,61 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
         </div>
       )}
 
-      {/* TAB CONTENT: MONITORING AI */}
+      {/* TAB CONTENT: MONITORING AI (NEW DATA-DRIVEN VERSION) */}
       {activeInnerTab === 'monitoring' && (
         <div className="animate-in fade-in">
           <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 relative overflow-hidden shadow-sm">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 opacity-60"></div>
-            <h3 className="flex items-center gap-2 font-extrabold text-2xl mb-2 text-slate-900"><LineChart className="text-blue-600 w-8 h-8"/> Deteksi Performa AI</h3>
-            <p className="text-slate-500 mb-8 max-w-2xl">Masukkan data hasil iklan harian Anda. AI akan menganalisis CPA, mendeteksi *Creative Fatigue*, dan memberi instruksi konkrit (Scale Up / Matikan).</p>
+            <h3 className="flex items-center gap-2 font-extrabold text-2xl mb-2 text-slate-900"><LineChart className="text-blue-600 w-8 h-8"/> Deteksi Performa & Kelelahan Iklan (Fatigue)</h3>
+            <p className="text-slate-500 mb-8 max-w-2xl">Masukkan data terkini kampanye Anda. Metrik <span className="font-bold text-slate-700">Frequency</span> dan <span className="font-bold text-slate-700">Impressions</span> akan membantu AI memberikan analisis apakah Anda harus <em className="text-blue-600 font-medium">Scale Up</em>, <em className="text-red-500 font-medium">Matikan Iklan</em>, atau sekadar menunggu.</p>
             
             <div className="space-y-6 relative z-10 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Form Baris 1: Konversi dasar */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">TOTAL SPEND (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.spend} onChange={e=>setAnalysisForm({...analysisForm, spend: e.target.value})} /></div>
                 <div><label className="text-xs font-bold text-slate-500 block mb-2">HASIL KONVERSI</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.results} onChange={e=>setAnalysisForm({...analysisForm, results: e.target.value})} /></div>
-                <div><label className="text-xs font-bold text-slate-500 block mb-2">RATA-RATA CTR (%)</label><input type="number" step="0.1" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.ctr} onChange={e=>setAnalysisForm({...analysisForm, ctr: e.target.value})} /></div>
-                <div><label className="text-xs font-bold text-slate-500 block mb-2">CPC LALU LINTAS (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.cpc} onChange={e=>setAnalysisForm({...analysisForm, cpc: e.target.value})} /></div>
+                
+                {/* Real-time CPA Calculator Box */}
+                <div className="bg-blue-600 text-white p-4 rounded-xl shadow-inner flex flex-col justify-center items-start">
+                   <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">Real-time CPA (Cost per Action)</span>
+                   <span className="text-2xl font-black">{currentCpa > 0 ? `Rp ${currentCpa.toLocaleString('id-ID')}` : '-'}</span>
+                </div>
               </div>
-              <button onClick={handleAnalyze} disabled={!analysisForm.spend || !analysisForm.results || isAnalyzing} className="w-full bg-blue-600 disabled:bg-slate-300 hover:bg-blue-700 text-white font-extrabold py-4 rounded-xl transition-all flex justify-center items-center gap-2 shadow-md hover:shadow-lg">
-                {isAnalyzing ? <span className="animate-pulse">Mengirim Data ke AI...</span> : <><Calculator className="w-5 h-5"/> Dapatkan Instruksi Optimasi AI</>}
+
+              {/* Form Baris 2: Indikator Fatigue (CTR, Freq, Impressions) */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-200 pt-4">
+                <div><label className="text-xs font-bold text-slate-500 block mb-2">RATA-RATA CTR (%)</label><input type="number" step="0.1" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.ctr} onChange={e=>setAnalysisForm({...analysisForm, ctr: e.target.value})} /></div>
+                <div><label className="text-xs font-bold text-slate-500 block mb-2">FREQUENCY</label><input type="number" step="0.1" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.frequency} onChange={e=>setAnalysisForm({...analysisForm, frequency: e.target.value})} /></div>
+                <div><label className="text-xs font-bold text-slate-500 block mb-2">IMPRESSIONS / REACH</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.impressions} onChange={e=>setAnalysisForm({...analysisForm, impressions: e.target.value})} /></div>
+                <div><label className="text-xs font-bold text-slate-500 block mb-2">CPC (Rp)</label><input type="number" className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" value={analysisForm.cpc} onChange={e=>setAnalysisForm({...analysisForm, cpc: e.target.value})} /></div>
+              </div>
+
+              {/* Warnings Peringatan Dini Cepat */}
+              {(showCtrWarning || showFreqWarning) && (
+                <div className="flex flex-col gap-2 mt-2">
+                   {showCtrWarning && <div className="bg-red-50 text-red-700 text-xs font-bold p-3 rounded-lg border border-red-100 flex items-center gap-2"><AlertOctagon className="w-4 h-4" /> Peringatan: CTR di bawah 1%. Periksa kembali Visual Hook 3 detik pertama Anda.</div>}
+                   {showFreqWarning && <div className="bg-amber-50 text-amber-700 text-xs font-bold p-3 rounded-lg border border-amber-100 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Waspada: Frequency melebihi 2.5x. Iklan Anda mulai mengalami Creative Fatigue.</div>}
+                </div>
+              )}
+
+              <button onClick={handleAnalyze} disabled={!analysisForm.spend || !analysisForm.results || isAnalyzing} className="w-full bg-slate-900 disabled:bg-slate-300 hover:bg-black text-white font-extrabold py-4 rounded-xl transition-all flex justify-center items-center gap-2 shadow-md hover:shadow-lg mt-4">
+                {isAnalyzing ? <span className="animate-pulse">Menganalisis Korelasi Data...</span> : <><Bot className="w-5 h-5"/> Dapatkan Analisis & Action Plan Meta 2026</>}
               </button>
             </div>
 
             {campaign.analyses && campaign.analyses.length > 0 && (
               <div className="mt-10 border-t border-slate-200 pt-8 relative z-10">
-                <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider mb-6">Riwayat Log Optimasi</h4>
+                <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider mb-6">Riwayat Log Optimasi AI</h4>
                 <div className="space-y-6">
                   {campaign.analyses.map(an => (
                      <div key={an.id} className="bg-white border-l-4 border-blue-500 rounded-r-2xl p-6 shadow-sm relative">
                        <span className="absolute top-4 right-4 bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded">{an.date}</span>
-                       <div className="flex gap-6 mb-4">
-                         <div><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">CPA Aktual</span><span className="font-black text-slate-900 text-lg">Rp {Math.round(an.data.spend / an.data.results).toLocaleString('id-ID')}</span></div>
-                         <div><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">CTR</span><span className="font-black text-slate-900 text-lg">{an.data.ctr}%</span></div>
+                       <div className="flex flex-wrap gap-4 mb-4 border-b border-slate-50 pb-4">
+                         <div className="bg-slate-50 p-2 rounded-lg min-w-[100px]"><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">CPA Aktual</span><span className="font-black text-slate-900">Rp {Math.round(an.data.spend / an.data.results).toLocaleString('id-ID')}</span></div>
+                         <div className="bg-slate-50 p-2 rounded-lg min-w-[80px]"><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">CTR</span><span className="font-black text-slate-900">{an.data.ctr}%</span></div>
+                         {an.data.frequency && <div className="bg-slate-50 p-2 rounded-lg min-w-[80px]"><span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Freq</span><span className="font-black text-slate-900">{an.data.frequency}x</span></div>}
                        </div>
-                       <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-900 whitespace-pre-wrap leading-relaxed font-medium">
+                       <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                          {an.insight}
                        </div>
                      </div>
