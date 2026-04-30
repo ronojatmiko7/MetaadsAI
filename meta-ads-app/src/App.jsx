@@ -532,7 +532,7 @@ export default function App() {
     localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns));
   }, [campaigns]);
 
-  const apiKey = ""; // API Key Gemini
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   // Hubungkan komponen anak dengan fungsi parent
   const openCampaign = (campaign) => {
