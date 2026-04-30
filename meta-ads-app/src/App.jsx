@@ -4,7 +4,7 @@ import {
   Rocket, CheckCircle2, Lightbulb, Crosshair, PenTool, RefreshCcw, 
   Users, MessageCircle, X, Send, Bot, PlusCircle, LayoutDashboard, 
   CheckSquare, LineChart, ChevronRight, Calculator, ShoppingCart, Store, Trash2,
-  KeyRound, ShieldCheck, AlertTriangle, ListChecks, Palette, Activity, Eye
+  KeyRound, ShieldCheck, AlertTriangle, ListChecks, Palette, Activity, Eye, Images
 } from 'lucide-react';
 
 // --- CONSTANTS ---
@@ -17,7 +17,8 @@ const GOALS = [
 
 const ASSETS = [
   { id: 'video', title: 'Video Pendek', desc: 'Reels / TikTok style', icon: <Video className="w-6 h-6" /> },
-  { id: 'static', title: 'Gambar Statis', desc: 'Foto produk/desain', icon: <ImageIcon className="w-6 h-6" /> },
+  { id: 'static', title: 'Gambar Statis', desc: 'Foto produk/desain tunggal', icon: <ImageIcon className="w-6 h-6" /> },
+  { id: 'carousel', title: 'Carousel', desc: 'Beberapa gambar digeser (Swipe)', icon: <Images className="w-6 h-6" /> },
   { id: 'none', title: 'Hanya Website', desc: 'Ambil gambar dari katalog web', icon: <Globe className="w-6 h-6" /> },
 ];
 
@@ -147,19 +148,17 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
     setErrorMsg('');
     setStep(7); // Pindah ke step loading
     
-    // UPDATE SUPER PROMPT 2026: Paksa Broad Audience, 5 Frameworks, & Visual Hook
+    // UPDATE SUPER PROMPT 2026: Multi-format & "Put Salt in Wound" Mandate
     const systemPrompt = `Anda adalah Top 1% Media Buyer Meta Ads expert Indonesia tahun 2026. Berdasarkan input user, buat blueprint JSON valid persis seperti skema ini (Jangan tambahkan teks lain selain JSON!).
 
     ATURAN BEST PRACTICE 2026:
     1. Targeting: Tekankan penggunaan Advantage+ Audience (Broad).
     2. Budget: Sarankan CBO/Advantage+ Campaign Budget jika testing banyak kreatif.
-    3. Creative: WAJIB buat 5 matriks kreatif dengan framework yang BERBEDA:
-       - Problem-Agitate-Solution (PAS)
-       - Testimonial / Social Proof
-       - FOMO / Urgency / Offer
-       - Edukasi / How-To / Myth-busting
-       - Emosional / Storytelling
-    4. WAJIB sertakan "visualHook" (apa yang harus tampil di 3 detik pertama video/gambar agar orang berhenti scroll).
+    3. Creative Frameworks: WAJIB buat 5 matriks kreatif dengan kerangka yang BERBEDA.
+       - WAJIB 1 Angle menggunakan framework "Put Salt in Wound" (Agitasi masalah audiens secara tajam/menyakitkan sebelum memberikan solusi).
+       - 4 Angle lainnya gunakan variasi seperti: Testimonial/Social Proof, FOMO/Offer, Edukasi/Myth-busting, Benefit Driven, dll.
+    4. Creative Formats: WAJIB gunakan format yang bervariasi di dalam 5 angle tersebut. Pastikan ada minimal 1 Gambar Statis, 1 Video Pendek, dan 1 Carousel. Sesuaikan saran dengan aset yang dimiliki user jika memungkinkan.
+    5. WAJIB sertakan "visualHook" (apa yang harus tampil di 3 detik pertama video atau di gambar utama agar orang berhenti scroll).
 
     Format JSON (HARUS SAMA PERSIS NAMA KEY-NYA):
     {
@@ -169,19 +168,19 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
       "targeting": "Rekomendasi Advantage+ Audience / Broad Targeting",
       "creativeMatrix": [
         {
-          "angleName": "Framework (misal: Problem-Agitate-Solution)", 
+          "angleName": "Framework (misal: Put Salt in Wound)", 
           "visualHook": "Visual 3 detik pertama (misal: Tulisan kuning besar DISKON 50% dengan wajah orang kaget)",
           "primaryText": "Caption copywriting yang mematikan", 
           "headline": "Judul (Pendek & Clicky)", 
           "description": "Deskripsi singkat", 
           "callToAction": "Tombol CTA", 
-          "format": "Format Aset"
+          "format": "Format Aset (Gambar Statis / Video Pendek / Carousel)"
         }
       ],
       "proTip": "1 kalimat super tip rahasia Meta Ads 2026"
     }`;
 
-    const userQuery = `Produk: ${formData.product}\nAudiens: ${formData.audience}\nTujuan: ${GOALS.find(g=>g.id===formData.goal)?.title}\nAnggaran: Rp ${formData.budget}\nAset: ${formData.assets.join(', ')}`;
+    const userQuery = `Produk: ${formData.product}\nAudiens: ${formData.audience}\nTujuan: ${GOALS.find(g=>g.id===formData.goal)?.title}\nAnggaran: Rp ${formData.budget}\nAset yang bisa disiapkan user: ${formData.assets.join(', ')}`;
 
     const messages = [
       { role: "system", content: systemPrompt },
@@ -199,7 +198,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         blueprint: parsedBlueprint,
         checklist: [
           { id: 1, text: 'Verifikasi Domain & Setup Meta Pixel/CAPI di website', done: false },
-          { id: 2, text: 'Buat 5 variasi kreatif sesuai Visual Hook dari Blueprint', done: false },
+          { id: 2, text: 'Buat 5 variasi kreatif (Gambar/Video/Carousel) sesuai Blueprint', done: false },
           { id: 3, text: 'Aktifkan Advantage+ Audience (Broad Targeting)', done: false },
           { id: 4, text: 'Gunakan minimal 3 variasi Primary Text per Ad (Dynamic)', done: false },
           { id: 5, text: 'FASE PEMBELAJARAN: DILARANG KERAS mematikan/edit iklan selama 72 JAM PERTAMA', done: false },
@@ -208,7 +207,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
       };
       
       setCampaigns(prev => [newCampaign, ...prev]);
-      addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" dengan 5 Framework Kreatif telah siap! Segera masuk ke menu Monitoring jika iklan sudah berjalan.`);
+      addChatMessage(`Blueprint "${parsedBlueprint.campaignName}" dengan 5 Framework Kreatif (termasuk teknik "Put Salt in Wound" dan berbagai format) telah siap! Segera masuk ke menu Monitoring jika iklan sudah berjalan.`);
       
       setTimeout(() => { setActiveTab('dashboard'); }, 2000);
 
@@ -229,7 +228,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         <div className="text-center mt-12">
           <div className="bg-blue-100 text-blue-700 p-5 rounded-full inline-block mb-6"><Target className="w-12 h-12" /></div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Mulai Setup. <br/>Cetak Winning Ads.</h1>
-          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Framework Meta Ads standar 2026. Hasilkan 5 variasi struktur iklan beserta visual hook-nya dengan AI secepat kilat.</p>
+          <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">Framework Meta Ads standar 2026 ditenagai Groq AI. Hasilkan variasi format konten & teknik copywriting "Put Salt in Wound" secepat kilat.</p>
           <button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-full text-lg shadow-lg flex items-center gap-2 mx-auto">Mulai Setup Baru <ArrowRight className="w-5 h-5" /></button>
           {!apiKey && <p className="text-sm text-amber-600 mt-4 font-medium flex items-center justify-center gap-1"><AlertTriangle className="w-4 h-4"/> Anda akan diminta memasukkan API Key saat memulai.</p>}
         </div>
@@ -293,7 +292,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
 
       {step === 5 && (
         <div className="animate-in slide-in-from-right-8 duration-500">
-          <h2 className="text-3xl font-bold mb-6">Aset Kreatif Tersedia?</h2>
+          <h2 className="text-3xl font-bold mb-6">Aset Kreatif yang Bisa Dibuat?</h2>
           <div className="grid grid-cols-1 gap-4">
             {ASSETS.map(a => (
               <div key={a.id} onClick={() => toggleAsset(a.id)} className={`cursor-pointer p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${formData.assets.includes(a.id) ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
@@ -302,6 +301,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
               </div>
             ))}
           </div>
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Pilih format yang Anda sanggup produksi. AI akan mencoba mendistribusikan <b>5 Ide Iklan</b> ke dalam format-format tersebut untuk hasil yang optimal.</p>
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
             <button onClick={handleNext} disabled={formData.assets.length === 0} className="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3 px-8 rounded-full flex gap-2">Review Data <ArrowRight className="w-5 h-5" /></button>
@@ -327,7 +327,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
              </div>
           </div>
 
-          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Setelah ini, AI akan memproses data Anda untuk meracik <b>5 Framework Iklan</b> (PAS, FOMO, Story, dll) beserta Visual Hook-nya.</p>
+          <p className="text-sm text-slate-500 mt-4 flex items-start gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100"><Lightbulb className="w-5 h-5 text-amber-500 shrink-0" /> Setelah ini, AI akan memproses data Anda untuk meracik <b>5 Framework Iklan</b> (Termasuk teknik "Put Salt in Wound", variasi format Video/Carousel/Gambar, dan Visual Hook-nya).</p>
           
           <div className="flex justify-between mt-8">
             <button onClick={handleBack} className="p-4 text-slate-500"><ArrowLeft className="w-6 h-6" /></button>
@@ -340,7 +340,7 @@ function Wizard({ setActiveTab, setCampaigns, apiKey, addChatMessage, setShowSet
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95">
           <div className="relative w-20 h-20 mb-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           <h2 className="text-2xl font-bold mb-2">Groq sedang menganalisis...</h2>
-          <p className="text-slate-500 max-w-sm mx-auto">Menulis 5 framework copywriting yang berbeda dan meracik rekomendasi struktur Advantage+ Meta...</p>
+          <p className="text-slate-500 max-w-sm mx-auto">Menulis framework copywriting (termasuk Agitasi Ekstrem), mendistribusikan format konten, dan meracik rekomendasi struktur Advantage+ Meta...</p>
         </div>
       )}
     </div>
@@ -454,7 +454,10 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     setIsGeneratingAngle(true);
     const existingAngles = campaign.blueprint.creativeMatrix.map(a => a.angleName).join(', ');
     
-    const prompt = `Anda adalah expert Meta Ads. Buat HANYA SATU angle iklan BARU untuk produk ini yang SANGAT BERBEDA dari angle yang sudah ada. Gunakan pendekatan Hook yang agresif (seperti Outrageous Claim yang masuk akal, Us vs Them, atau Visual Pattern Interrupt).
+    const prompt = `Anda adalah expert Meta Ads. Buat HANYA SATU angle iklan BARU untuk produk ini yang SANGAT BERBEDA dari angle yang sudah ada. 
+    Jika di list angle sebelumnya belum ada "Put Salt in Wound", maka WAJIB gunakan teknik tersebut. Jika sudah ada, gunakan teknik agresif lain seperti Us vs Them, atau Visual Pattern Interrupt.
+    Pastikan format yang disarankan adalah salah satu dari: Gambar Statis, Video Pendek, atau Carousel.
+    
     Produk: ${campaign.formData.product}
     Audiens: ${campaign.formData.audience}
     Angle yang SUDAH ADA (JANGAN gunakan angle ini lagi): ${existingAngles}
@@ -467,7 +470,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
       "headline": "Judul click-worthy",
       "description": "Deskripsi singkat / penawaran",
       "callToAction": "Tombol CTA",
-      "format": "Gambar Statis / Video Pendek"
+      "format": "Format Aset (Gambar Statis / Video Pendek / Carousel)"
     }`;
 
     const messages = [
@@ -489,6 +492,14 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
     } finally {
       setIsGeneratingAngle(false);
     }
+  };
+
+  // Helper function to render correct format icon
+  const getFormatIcon = (formatStr) => {
+    const f = formatStr.toLowerCase();
+    if (f.includes('video')) return <Video className="w-4 h-4" />;
+    if (f.includes('carousel')) return <Images className="w-4 h-4" />;
+    return <ImageIcon className="w-4 h-4" />;
   };
 
   return (
@@ -570,7 +581,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
              <div>
                 <h4 className="font-extrabold text-2xl text-slate-800">Bank Kreatif (Ad Level)</h4>
-                <p className="text-sm text-slate-500 mt-1">Gunakan fitur Dynamic Creative Meta untuk mengetes semua angle ini sekaligus.</p>
+                <p className="text-sm text-slate-500 mt-1">Berbagai kombinasi format (Carousel, Video, Statis) dan teknik copywriting untuk DCO.</p>
              </div>
              <button 
                 onClick={handleGenerateNewAngle} 
@@ -582,14 +593,20 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
           </div>
 
           <div className="grid gap-6">
-            {campaign.blueprint.creativeMatrix.map((ad, idx) => (
-              <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-2 h-full bg-slate-200 group-hover:bg-blue-500 transition-colors"></div>
+            {campaign.blueprint.creativeMatrix.map((ad, idx) => {
+              const isSaltInWound = ad.angleName.toLowerCase().includes('salt') || ad.angleName.toLowerCase().includes('agitasi');
+              return (
+              <div key={idx} className={`bg-white border ${isSaltInWound ? 'border-red-200 shadow-red-100' : 'border-slate-200 shadow-sm'} rounded-2xl p-6 relative overflow-hidden group hover:shadow-md transition-shadow`}>
+                <div className={`absolute top-0 left-0 w-2 h-full ${isSaltInWound ? 'bg-red-500' : 'bg-slate-200 group-hover:bg-blue-500'} transition-colors`}></div>
                 
                 <div className="ml-2">
                   <div className="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-slate-100">
-                    <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wider">Format: {ad.angleName}</span>
-                    <span className="text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1.5 rounded uppercase tracking-wider ml-auto">{ad.format}</span>
+                    <span className={`${isSaltInWound ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'} text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wider`}>
+                      Angle: {ad.angleName}
+                    </span>
+                    <span className="text-xs bg-slate-100 text-slate-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider ml-auto flex items-center gap-1.5">
+                      {getFormatIcon(ad.format)} {ad.format}
+                    </span>
                   </div>
                   
                   {ad.visualHook && (
@@ -623,7 +640,7 @@ function CampaignDetail({ campaign, closeDetail, updateCampaign, apiKey }) {
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       )}
