@@ -566,8 +566,8 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('metaAdsCampaigns_v2', JSON.stringify(campaigns)); }, [campaigns]);
 
-  // ---> MENGGUNAKAN KUNCI GROQ DARI VERCEL <---
-  const apiKey = ""; 
+  // ---> KUNCI GROQ LANGSUNG DITANAMKAN DI SINI <---
+  const apiKey = "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"; 
 
   const openCampaign = (campaign) => { setSelectedCampaignId(campaign.id); setActiveTab('campaignDetail'); };
   const updateCampaign = (updatedCampaign) => { setCampaigns(prev => prev.map(c => c.id === updatedCampaign.id ? updatedCampaign : c)); };
